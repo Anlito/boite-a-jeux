@@ -105,6 +105,8 @@ function mount(root, ctx) {
   function startAim() {
     banner.hidden = true;
     phase = "aim";
+    // Le canon se tourne d'emblée du bon côté (utile quand un voisin vient d'être battu).
+    active().angle = fitAngle(active().angle, sideOf(active()));
     if (active().p.kind === "robot") robotPlan = planShot(active());
   }
 
@@ -215,14 +217,29 @@ function mount(root, ctx) {
 
   /* ---------- Visée au doigt : tirer en arrière puis lâcher ---------- */
 
-  function aimFrom(start, point) {
+  // Sens de tir imposé : le château le plus à gauche tire vers la droite, le plus à droite
+  // vers la gauche. Ceux du milieu (à 3 ou 4) ont des adversaires des deux côtés : sens libre.
+  function sideOf(c) {
+    if (solo) return 1;
+    const standing = alive().sort((a, b) => a.x - b.x);
+    if (c === standing[0]) return 1;
+    if (c === standing.at(-1)) return -1;
+    return 0;
+  }
+  const RANGES = { 1: [-Math.PI / 2 + 0.03, -0.05], "-1": [-Math.PI + 0.05, -Math.PI / 2 - 0.03], 0: [-Math.PI + 0.05, -0.05] };
+
+  // Ramène un angle dans l'intervalle permis, du côté le plus proche (jamais vers le sol).
+  function fitAngle(angle, side) {
+    const [low, high] = RANGES[side];
+    if (angle >= low && angle <= high) return angle;
+    const gap = target => Math.abs(Math.atan2(Math.sin(angle - target), Math.cos(angle - target)));
+    return gap(low) < gap(high) ? low : high;
+  }
+
+  function aimFrom(start, point, side) {
     const dx = start.x - point.x, dy = start.y - point.y;
     const power = clamp(Math.hypot(dx, dy) / 260, 0, 1);
-    let angle = Math.atan2(dy, dx);
-    // Jamais vers le sol : entre presque horizontal à droite et presque horizontal à gauche.
-    if (angle > 0) angle = angle < Math.PI / 2 ? -0.05 : -Math.PI + 0.05;
-    angle = clamp(angle, -Math.PI + 0.05, -0.05);
-    return { angle, power };
+    return { angle: fitAngle(Math.atan2(dy, dx), side), power };
   }
 
   const onDown = event => {
@@ -235,7 +252,7 @@ function mount(root, ctx) {
   };
   const onMove = event => {
     if (!aim || aim.id !== event.pointerId) return;
-    const next = aimFrom(aim.start, stage.toWorld(event.clientX, event.clientY));
+    const next = aimFrom(aim.start, stage.toWorld(event.clientX, event.clientY), sideOf(active()));
     aim.angle = next.angle;
     aim.power = next.power;
     active().angle = next.angle;

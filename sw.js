@@ -1,6 +1,6 @@
 // Garde l'application sur l'appareil pour jouer sans réseau.
 // Changer VERSION à chaque mise en ligne pour que les appareils récupèrent la nouvelle version.
-const VERSION = "boite-a-jeux-0.2.0";
+const VERSION = "boite-a-jeux-0.2.1";
 const SHELL = [
   "./",
   "index.html",
