@@ -43,7 +43,7 @@ export default {
 
 ## Visuels
 
-Les images viennent du brief donné à ChatGPT (voir le cahier des charges). Lot 1 intégré : mascotte, 12 avatars, 3 robots, icônes, décors, effets.
+Les images viennent du brief donné à ChatGPT (voir le cahier des charges). Lots 1 et 2 intégrés : mascotte, 12 avatars, 3 robots, icônes, décors, effets ; 14 vignettes de jeux (JPG 640 × 480). La vignette astro-balles est à redemander (elle montre un plateau à billes, pas un duel de raquettes).
 
 Pour ajouter un lot : réduire les images à la taille affichée (personnages 512 px, icônes 128 px, effets 256 px, décors en JPG 1600 px), les placer dans `assets/` avec les noms du brief, puis les ajouter à `js/core/images-list.js`. Elles remplacent alors le dessin vectoriel de même nom et sont gardées pour le hors-ligne. Les icônes livrées sont violettes : elles ne servent que sur fond clair, les boutons colorés gardent les icônes vectorielles blanches.
 

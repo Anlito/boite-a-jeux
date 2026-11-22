@@ -43,5 +43,19 @@ globalThis.ASSET_IMAGES = [
   "commun/mascotte-triste.png",
   "commun/robots/robot-facile.png",
   "commun/robots/robot-fort.png",
-  "commun/robots/robot-moyen.png"
+  "commun/robots/robot-moyen.png",
+  "vignettes/astro-balles.jpg",
+  "vignettes/calcul-eclair.jpg",
+  "vignettes/cherche-et-trouve.jpg",
+  "vignettes/course-grenouilles.jpg",
+  "vignettes/les-canons.jpg",
+  "vignettes/orchestre.jpg",
+  "vignettes/panier-fruits.jpg",
+  "vignettes/patate-chaude.jpg",
+  "vignettes/petits-bolides.jpg",
+  "vignettes/serpentins.jpg",
+  "vignettes/sumo-bulles.jpg",
+  "vignettes/tir-etoiles.jpg",
+  "vignettes/top-depart.jpg",
+  "vignettes/tour-bancale.jpg"
 ];

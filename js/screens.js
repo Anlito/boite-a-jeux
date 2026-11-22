@@ -9,7 +9,7 @@ export { album } from "./album.js";
 
 // Pièces gagnées : au moins une par partie, une par étoile, et un bonus pour un record ou une victoire.
 const coinsLine = (amount, extra = "") => `<span class="coins-won">+${amount} ${iconArt("piece")}${extra}</span>`;
-import { SEATS, AVATARS, ROBOTS, avatarArt, robotArt, mascotArt, icon, iconArt, starSVG, peopleArt, shapeSVG } from "./core/art.js";
+import { SEATS, AVATARS, ROBOTS, avatarArt, robotArt, mascotArt, icon, iconArt, starSVG, peopleArt, shapeSVG, hasImage, imagePath } from "./core/art.js";
 
 const stars = (count, total = 3) => `<span class="stars">${Array.from({ length: total }, (_, i) => starSVG(i < count)).join("")}</span>`;
 
@@ -24,7 +24,7 @@ export function home(app) {
     const best = store.bestStars(game.id);
     const counts = [1, 2, 3, 4].map(n => `<span class="pill ${n >= game.players.min && n <= game.players.max ? "" : "off"}">${n}</span>`).join("");
     return `<button class="game-card" data-game="${game.id}" style="--theme:${game.theme.bg};--theme-ink:${game.theme.ink}">
-      <span class="game-art">${game.vignette()}</span>
+      <span class="game-art">${hasImage(`vignettes/${game.id}.jpg`) ? `<img class="vignette" src="${imagePath(`vignettes/${game.id}.jpg`)}" alt="" draggable="false">` : game.vignette()}</span>
       <span class="game-name">${game.title}</span>
       <span class="game-meta"><span class="pills" aria-label="De ${game.players.min} à ${game.players.max} joueurs">${counts}</span>${stars(best)}</span>
     </button>`;
