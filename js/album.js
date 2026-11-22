@@ -3,7 +3,7 @@ import { store } from "./core/store.js";
 import { play, say } from "./core/sound.js";
 import { h, on, modal, iconButton } from "./core/ui.js";
 import { avatarArt, mascotArt, iconArt, icon } from "./core/art.js";
-import { STICKERS, FAMILIES, PACK_PRICE, stickerById, stickerHTML, drawPack } from "./core/stickers.js";
+import { STICKERS, FAMILIES, PACK_PRICE, DOUBLES_PER_COIN, stickerById, stickerHTML, drawPack } from "./core/stickers.js";
 
 let lastProfile = null;
 
@@ -30,6 +30,8 @@ export function album(app, { profileId } = {}) {
     const coins = store.coins(current.id);
     const found = STICKERS.filter(s => owned[s.id]).length;
     const canOpen = coins >= PACK_PRICE;
+    const doubles = store.doubles(current.id);
+    const canSell = doubles >= DOUBLES_PER_COIN;
     body.innerHTML = `
       <nav class="album-people" aria-label="Choisir l'album">${profiles.map(p => `
         <button class="album-person ${p.id === current.id ? "current" : ""}" data-profile="${p.id}" aria-label="Album de ${p.name}">
@@ -48,6 +50,11 @@ export function album(app, { profileId } = {}) {
           <span class="price">${PACK_PRICE} ${iconArt("piece")}</span>
         </button>
         ${canOpen ? "" : `<p class="album-hint">Encore ${PACK_PRICE - coins} pièce${PACK_PRICE - coins > 1 ? "s" : ""} : joue pour les gagner !</p>`}
+        <div class="album-doubles">
+          <span class="doubles-pile" aria-label="${doubles} double${doubles > 1 ? "s" : ""}">${Array.from({ length: DOUBLES_PER_COIN }, (_, k) => `<i class="${k < doubles ? "on" : ""}"></i>`).join("")}</span>
+          <span class="doubles-text">${doubles} double${doubles > 1 ? "s" : ""}</span>
+          <button class="btn sell-doubles" ${canSell ? "" : "disabled"}>${DOUBLES_PER_COIN} doubles → 1 ${iconArt("piece")}</button>
+        </div>
       </section>
       ${FAMILIES.map(family => `
         <section class="album-family">
@@ -59,10 +66,16 @@ export function album(app, { profileId } = {}) {
       render();
     });
     body.querySelector(".open-pack").addEventListener("click", openPack);
+    body.querySelector(".sell-doubles").addEventListener("click", () => {
+      if (!store.sellDoubles(current.id, DOUBLES_PER_COIN, id => stickerById(id)?.rarity)) return;
+      play("point");
+      say("Et voilà, une pièce !");
+      render();
+    });
   }
 
   function openPack() {
-    const picks = drawPack(store.stickers(current.id));
+    const picks = drawPack();
     const result = store.openPack(current.id, PACK_PRICE, picks.map(s => s.id));
     if (!result) return;
     const content = h(`<div class="pack-open">
@@ -72,7 +85,7 @@ export function album(app, { profileId } = {}) {
       <div class="pack-cards">${result.map(({ id, isNew }, k) => `
         <div class="pack-card" style="--k:${k}">
           ${stickerHTML(stickerById(id))}
-          <span class="pack-tag ${isNew ? "new" : ""}">${isNew ? "Nouveau !" : `+1 ${iconArt("piece")}`}</span>
+          <span class="pack-tag ${isNew ? "new" : ""}">${isNew ? "Nouveau !" : "Double"}</span>
         </div>`).join("")}</div>
       <p class="pack-hint">Touche la pochette !</p>
       <button class="btn primary wide pack-done" hidden>${icon("lecture")} Super !</button>
@@ -91,7 +104,7 @@ export function album(app, { profileId } = {}) {
         const fresh = result.filter(r => r.isNew).length;
         if (best?.rarity === "brillant") { play("win"); say("Waouh, un autocollant doré !"); }
         else if (best?.rarity === "rare") say("Un autocollant rare !");
-        else say(fresh ? `${fresh} nouveau${fresh > 1 ? "x" : ""} pour ton album !` : "Des doubles : ils te rendent des pièces !");
+        else say(fresh ? `${fresh} nouveau${fresh > 1 ? "x" : ""} pour ton album !` : "Des doubles ! Garde-les : cinq doubles valent une pièce.");
       }, 450 + result.length * 380);
     });
     content.querySelector(".pack-done").addEventListener("click", dialog.close);

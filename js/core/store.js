@@ -77,7 +77,7 @@ export const store = {
 
   stickers(profileId) { return this.profile(profileId)?.stickers || {}; },
 
-  // Paie la pochette, colle les autocollants ; un doublon rend une pièce.
+  // Paie la pochette et colle les autocollants (les doubles s'ajoutent au tas).
   // Renvoie [{ id, isNew }] ou null si pas assez de pièces.
   openPack(profileId, price, ids) {
     const profile = this.profile(profileId);
@@ -87,11 +87,32 @@ export const store = {
     const result = ids.map(id => {
       const isNew = !profile.stickers[id];
       profile.stickers[id] = (profile.stickers[id] || 0) + 1;
-      if (!isNew) profile.coins += 1;
       return { id, isNew };
     });
     save();
     return result;
+  },
+
+  // Nombre de doubles : chaque autocollant en plus du premier.
+  doubles(profileId) {
+    return Object.values(this.stickers(profileId)).reduce((sum, n) => sum + Math.max(0, n - 1), 0);
+  },
+
+  // Vend `count` doubles contre une pièce. On retire d’abord les doubles des autocollants communs,
+  // puis des plus nombreux ; on ne touche jamais au dernier exemplaire.
+  sellDoubles(profileId, count, rarityOf) {
+    const profile = this.profile(profileId);
+    if (!profile || this.doubles(profileId) < count) return false;
+    const rank = { commun: 0, rare: 1, brillant: 2 };
+    for (let k = 0; k < count; k++) {
+      const id = Object.keys(profile.stickers)
+        .filter(key => profile.stickers[key] > 1)
+        .sort((a, b) => (rank[rarityOf(a)] ?? 0) - (rank[rarityOf(b)] ?? 0) || profile.stickers[b] - profile.stickers[a])[0];
+      profile.stickers[id]--;
+    }
+    profile.coins = (profile.coins || 0) + 1;
+    save();
+    return true;
   },
 
   bestStars(gameId) {

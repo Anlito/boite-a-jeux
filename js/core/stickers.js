@@ -1,9 +1,11 @@
 // Album d'autocollants : la collection, les pochettes et leur tirage.
 // Chaque partie rapporte des pièces ; une pochette coûte PACK_PRICE pièces et contient PACK_SIZE autocollants.
+// Les doubles s'accumulent ; DOUBLES_PER_COIN doubles se revendent contre une pièce.
 import { AVATARS, avatarArt, robotArt, mascotArt } from "./art.js";
 
 export const PACK_PRICE = 5;
 export const PACK_SIZE = 3;
+export const DOUBLES_PER_COIN = 5;
 
 const animals = Object.keys(AVATARS);
 const MOODS = { salut: "La mascotte dit bonjour", explique: "La mascotte explique", bravo: "La mascotte fait la fête", triste: "La mascotte boude", surprise: "La mascotte surprise" };
@@ -37,8 +39,8 @@ export function stickerHTML(sticker, owned = 1) {
 
 const RARITY_ODDS = [["brillant", 0.08], ["rare", 0.22], ["commun", 0.70]];
 
-// Tire une pochette. Les autocollants pas encore trouvés sortent plus souvent, pour que l'album avance.
-export function drawPack(owned) {
+// Tire une pochette, au hasard : seule la rareté pèse (les dorés sont rares). Les doubles sont possibles.
+export function drawPack() {
   const picks = [];
   for (let k = 0; k < PACK_SIZE; k++) {
     let roll = Math.random(), rarity = "commun";
@@ -47,9 +49,7 @@ export function drawPack(owned) {
       roll -= odds;
     }
     const pool = STICKERS.filter(s => s.rarity === rarity);
-    const missing = pool.filter(s => !owned[s.id] && !picks.includes(s));
-    const from = missing.length && Math.random() < 0.65 ? missing : pool;
-    picks.push(from[Math.floor(Math.random() * from.length)]);
+    picks.push(pool[Math.floor(Math.random() * pool.length)]);
   }
   return picks;
 }
