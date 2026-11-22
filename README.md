@@ -11,6 +11,9 @@ Application web installable, sans compte, sans publicité, qui fonctionne hors l
 | Sumo-bulles | 1 à 4, robots | Jouable |
 | Les canons | 1 à 4, robots, chacun son tour | Jouable |
 | Astro-balles | 1 à 4 (une raquette par côté), robots | Jouable |
+| Course des grenouilles | 1 à 4 couloirs, robots | Jouable |
+| Panier de fruits | 1 à 4 vergers, robots | Jouable |
+| Tir aux étoiles | 1 à 4, robots, chacun son tour | Jouable |
 
 En solo, chaque jeu a 10 niveaux dessinés à la main (une étoile débloque le suivant) puis un défi libre, ouvert après le niveau 5.
 
