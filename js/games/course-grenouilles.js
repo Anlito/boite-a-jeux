@@ -9,27 +9,36 @@ const W = 1600, H = 900;
 const FROG_X = 230, GROUND = 250, LANE = 300;     // repère d'un couloir : 300 unités de haut, sol à 250
 const JUMP = 760, DOUBLE = 640, GRAVITY = 1750;
 const HEARTS = 3;
+// Obstacles. type : "sol" (sauter par-dessus), "haut" (double saut obligatoire),
+// "abeille" (en l'air entre y0 et y1 : haute = rester au sol, basse = sauter), "mare" (un trou d'eau à franchir en l'air).
 const KINDS = {
-  puddle: { w: 74, h: 10 }, snail: { w: 50, h: 32 }, mushrooms: { w: 46, h: 46 },
-  boot: { w: 38, h: 48 }, duck: { w: 58, h: 38 }, hedgehog: { w: 56, h: 40 }
+  puddle: { type: "sol", w: 74, h: 10 }, snail: { type: "sol", w: 50, h: 32 }, mushrooms: { type: "sol", w: 46, h: 46 },
+  boot: { type: "sol", w: 38, h: 48 }, duck: { type: "sol", w: 58, h: 38 }, hedgehog: { type: "sol", w: 56, h: 40 },
+  log: { type: "haut", w: 46, h: 178 },
+  beeHigh: { type: "abeille", w: 44, y0: 62, y1: 112 },
+  beeLow: { type: "abeille", w: 44, y0: 22, y1: 64 },
+  pond: { type: "mare", w: 150 }, bigPond: { type: "mare", w: 250 }
 };
-const ROBOT = { 1: { early: [0.1, 0.32], miss: 0.18 }, 2: { early: [0.14, 0.24], miss: 0.07 }, 3: { early: [0.16, 0.2], miss: 0.02 } };
+const GROUND_KINDS = ["puddle", "snail", "mushrooms", "boot", "duck", "hedgehog"];
+const ALL = [...GROUND_KINDS, "log", "beeHigh", "beeLow", "pond", "bigPond"];
+const ROBOT = { 1: { early: [0.06, 0.34], miss: 0.2 }, 2: { early: [0.12, 0.24], miss: 0.08 }, 3: { early: [0.15, 0.2], miss: 0.02 } };
 
 // Niveaux solo : distance de la ligne d'arrivée (en mètres), vitesses, obstacles, paires serrées (double saut).
 const LEVELS = [
-  { meters: 250, start: 300, top: 360, kinds: ["puddle", "snail"], pairs: false, goal: "Touche l'écran pour sauter par-dessus les flaques et les escargots !" },
-  { meters: 300, start: 320, top: 400, kinds: ["puddle", "snail", "mushrooms"], pairs: false, goal: "Des champignons ! Saute au bon moment." },
-  { meters: 350, start: 330, top: 430, kinds: ["puddle", "snail", "mushrooms", "boot"], pairs: false, goal: "Ramasse les pièces en l'air en sautant !" },
-  { meters: 400, start: 340, top: 460, kinds: Object.keys(KINDS), pairs: false, goal: "Tous les obstacles de la mare sont là !" },
-  { meters: 450, start: 350, top: 480, kinds: Object.keys(KINDS), pairs: true, goal: "Deux obstacles collés : touche deux fois pour un double saut !" },
-  { meters: 500, start: 370, top: 520, kinds: Object.keys(KINDS), pairs: true, goal: "Ça accélère ! Garde tes trois cœurs pour les 3 étoiles." },
-  { meters: 550, start: 390, top: 550, kinds: Object.keys(KINDS), pairs: true, goal: "Encore plus vite. Ne saute pas trop tôt !" },
-  { meters: 600, start: 410, top: 590, kinds: Object.keys(KINDS), pairs: true, goal: "Une longue course jusqu'au drapeau !" },
-  { meters: 700, start: 430, top: 630, kinds: Object.keys(KINDS), pairs: true, goal: "Presque le niveau des champions !" },
-  { meters: 800, start: 450, top: 670, kinds: Object.keys(KINDS), pairs: true, goal: "Le défi des champions : 800 mètres à toute vitesse !" }
+  { meters: 300, start: 340, top: 440, kinds: ["puddle", "snail", "mushrooms", "hedgehog"], pairs: false, goal: "Touche l'écran pour sauter par-dessus les obstacles !" },
+  { meters: 350, start: 360, top: 480, kinds: [...GROUND_KINDS, "pond"], pairs: false, goal: "Des mares ! Saute pour ne pas tomber dans l'eau." },
+  { meters: 400, start: 370, top: 500, kinds: [...GROUND_KINDS, "pond", "beeHigh"], pairs: false, goal: "Les abeilles volent haut : ne saute pas quand elles passent !" },
+  { meters: 450, start: 390, top: 540, kinds: [...GROUND_KINDS, "pond", "beeHigh", "log"], pairs: false, goal: "Un tronc géant : touche deux fois pour un double saut !" },
+  { meters: 500, start: 410, top: 580, kinds: ALL.filter(k => k !== "bigPond"), pairs: true, goal: "Abeilles hautes, abeilles basses : regarde bien avant de sauter !" },
+  { meters: 600, start: 430, top: 620, kinds: ALL, pairs: true, goal: "Les grandes mares demandent un double saut !" },
+  { meters: 700, start: 450, top: 660, kinds: ALL, pairs: true, goal: "Tout arrive vite. Garde tes trois cœurs !" },
+  { meters: 800, start: 470, top: 700, kinds: ALL, pairs: true, goal: "Une longue course à toute vitesse !" },
+  { meters: 900, start: 490, top: 740, kinds: ALL, pairs: true, goal: "Presque le niveau des champions !" },
+  { meters: 1000, start: 510, top: 780, kinds: ALL, pairs: true, goal: "Le défi des champions : 1000 mètres à fond !" }
 ];
-const FREE = { meters: null, start: 330, top: 680, kinds: Object.keys(KINDS), pairs: true };
-const MULTI = { meters: null, start: 320, top: 640, kinds: Object.keys(KINDS), pairs: true };
+const FREE = { meters: null, start: 380, top: 780, kinds: ALL, pairs: true };
+const MULTI = { meters: null, start: 380, top: 760, kinds: ALL, pairs: true };
+const ACCEL = 9;
 
 const between = (a, b) => a + Math.random() * (b - a);
 const pickOne = list => list[Math.floor(Math.random() * list.length)];
@@ -62,21 +71,21 @@ function mount(root, ctx) {
   function fill() {
     while (lastRight < distance + view + 400) {
       const kind = pickOne(setup.kinds);
-      const gap = speed * between(1.05, 1.45);
+      const gap = speed * between(0.95, 1.35) + (KINDS[kind].type === "mare" ? speed * 0.25 : 0);
       let at = lastRight + gap;
       if (finishAt && at > finishAt - 200) { lastRight = Infinity; return; }
       course.push({ kind, at, ...KINDS[kind], passed: new Set() });
       lastRight = at + KINDS[kind].w;
       // Paire serrée : un deuxième obstacle juste derrière (il faut un double saut ou un saut long).
-      if (setup.pairs && Math.random() < 0.22) {
+      if (setup.pairs && KINDS[kind].type === "sol" && Math.random() < 0.25) {
         const second = pickOne(["snail", "puddle", "mushrooms"]);
         at = lastRight + speed * 0.32;
         course.push({ kind: second, at, ...KINDS[second], passed: new Set() });
         lastRight = at + KINDS[second].w;
       }
       // Des pièces en arc au-dessus de certains obstacles.
-      if (Math.random() < 0.55) {
-        const mid = at - KINDS[kind].w;
+      if (Math.random() < 0.55 && KINDS[kind].type !== "abeille") {
+        const mid = at + KINDS[kind].w / 2 - (KINDS[kind].type === "mare" ? 0 : KINDS[kind].w);
         for (let k = -1; k <= 1; k++) coins.push({ x: mid + k * 42, height: 120 + (k === 0 ? 40 : 0), taken: new Set() });
       }
     }
@@ -115,15 +124,37 @@ function mount(root, ctx) {
     const rules = ROBOT[r.p.level];
     const next = course.find(o => o.at + o.w > distance + FROG_X - 20 && !o.passed.has(r));
     if (!next) return;
+    const info = KINDS[next.kind];
     const gapTime = (next.at - (distance + FROG_X + 24)) / speed;
-    if (!r.ai.plan || r.ai.plan.obstacle !== next) r.ai.plan = { obstacle: next, at: between(...rules.early), missed: Math.random() < rules.miss, doubleDone: false };
-    if (!r.ai.plan.missed && r.y === 0 && gapTime <= r.ai.plan.at && gapTime > -0.05) jump(r);
+    if (!r.ai.plan || r.ai.plan.obstacle !== next) r.ai.plan = { obstacle: next, at: between(...rules.early), missed: Math.random() < rules.miss };
+    const plan = r.ai.plan;
+    if (info.type === "abeille" && info.y0 > 40) {
+      // Abeille haute : le bon réflexe est de rester au sol (un robot distrait saute quand même).
+      if (plan.missed && r.y === 0 && gapTime <= plan.at && gapTime > 0) jump(r);
+      return;
+    }
+    const early = info.type === "mare" ? plan.at * 0.6 : plan.at;
+    if (!plan.missed && r.y === 0 && gapTime <= early && gapTime > -0.05) jump(r);
+    // Tronc ou grande mare : double saut au sommet du premier saut.
+    if (!plan.missed && r.y > 0 && !r.doubled && r.vy < 80 && (info.type === "haut" || (info.type === "mare" && next.w > speed * 0.62))) jump(r);
+    if (info.type !== "sol") return;
     // Paire serrée : double saut quand le deuxième obstacle arrive.
     const after = course[course.indexOf(next) + 1];
     if (after && r.y > 0 && !r.doubled && after.at - (next.at + next.w) < speed * 0.4) {
       const t2 = (after.at - (distance + FROG_X + 24)) / speed;
       if (t2 < 0.12 && !r.ai.plan.missed) jump(r);
     }
+  }
+
+  // La grenouille (de r.y à r.y + 34 en hauteur) touche-t-elle l'obstacle ?
+  function touches(r, o, left, right) {
+    const info = KINDS[o.kind];
+    if (info.type === "abeille") return r.y + 34 > info.y0 && r.y < info.y1;
+    if (info.type === "mare") {
+      const middle = distance + FROG_X;
+      return middle > o.at + 10 && middle < o.at + o.w - 10 && r.y <= 0;   // au sol au-dessus de l'eau : plouf
+    }
+    return r.y < o.h + 4;
   }
 
   function update(dt) {
@@ -134,7 +165,7 @@ function mount(root, ctx) {
       return;
     }
     if (phase === "done") return;
-    speed = Math.min(setup.top, speed + 6 * dt);
+    speed = Math.min(setup.top, speed + ACCEL * dt);
     distance += speed * dt;
     fill();
     while (course.length && course[0].at + course[0].w < distance - 200) course.shift();
@@ -151,7 +182,7 @@ function mount(root, ctx) {
       const left = distance + FROG_X - 20, right = distance + FROG_X + 20;
       for (const o of course) {
         if (o.passed.has(r) || o.at > right || o.at + o.w < left) continue;
-        if (r.y < o.h + 4 && r.hit <= 0) {
+        if (r.hit <= 0 && touches(r, o, left, right)) {
           o.passed.add(r);
           r.hearts--;
           r.hit = 1.2;
@@ -232,6 +263,15 @@ function mount(root, ctx) {
     hills(GROUND - 60, distance * 0.4, theme.near, 34);
     g.fillStyle = theme.earth; g.fillRect(0, GROUND, view, LANE - GROUND);
     g.fillStyle = theme.grass; g.fillRect(0, GROUND - 4, view, 12);
+    // Mares : on creuse le sol.
+    for (const o of course) {
+      if (KINDS[o.kind].type !== "mare") continue;
+      const x = o.at - distance;
+      if (x + o.w < -20 || x > view) continue;
+      g.fillStyle = "#2E7FA3"; g.fillRect(x, GROUND - 4, o.w, LANE - GROUND + 4);
+      g.fillStyle = "#78D7DE"; g.fillRect(x, GROUND + 6, o.w, 10);
+      g.fillStyle = "#7CC86B"; g.beginPath(); g.ellipse(x + o.w * 0.5, GROUND + 10, 16, 5, 0, 0, Math.PI * 2); g.fill();
+    }
     // Ligne d'arrivée
     if (finishAt) {
       const fx = finishAt - distance + FROG_X;
@@ -289,6 +329,26 @@ function mount(root, ctx) {
 
   function drawObstacle(o, x) {
     const y = GROUND, w = o.w, hh = o.h;
+    const info = KINDS[o.kind];
+    if (info.type === "mare") return;
+    if (info.type === "abeille") {
+      const by = y - (info.y0 + info.y1) / 2 + Math.sin(performance.now() / 120 + o.at) * 4;
+      g.fillStyle = "#ffffffcc";
+      g.beginPath(); g.ellipse(x + 16, by - 14, 10, 14, -0.5, 0, Math.PI * 2); g.ellipse(x + 30, by - 14, 10, 14, 0.5, 0, Math.PI * 2); g.fill();
+      oval(x + 22, by, 22, 15, "#FFC83D");
+      g.fillStyle = "#2B2350"; g.fillRect(x + 14, by - 14, 6, 28); g.fillRect(x + 26, by - 14, 6, 28);
+      oval(x + 4, by - 2, 3, 3, "#2B2350");
+      return;
+    }
+    if (info.type === "haut") {
+      g.fillStyle = "#8B5E3C"; g.beginPath(); g.roundRect(x, y - hh, w, hh, 10); g.fill();
+      g.strokeStyle = "#6B4A2A"; g.lineWidth = 3;
+      for (let k = 1; k < 5; k++) { g.beginPath(); g.moveTo(x + 6, y - hh * k / 5); g.lineTo(x + w - 6, y - hh * k / 5 + 6); g.stroke(); }
+      oval(x + w / 2, y - hh, w / 2, 9, "#C9925E");
+      oval(x + w / 2, y - hh, w / 4, 4, "#8B5E3C");
+      g.fillStyle = "#6CBF5A"; g.beginPath(); g.ellipse(x + w - 4, y - hh * 0.6, 12, 6, 0.6, 0, Math.PI * 2); g.fill();
+      return;
+    }
     if (o.kind === "puddle") { oval(x + w / 2, y, w / 2, 8, "#286379"); oval(x + w / 2, y - 3, w * 0.45, 6, "#78D7DE"); }
     else if (o.kind === "snail") { oval(x + w / 2, y - 7, w * 0.48, 8, "#DFBF53"); oval(x + 18, y - 17, 15, 15, "#DC8750"); oval(x + 38, y - 15, 8, 10, "#F9D36B"); oval(x + 37, y - 26, 2.5, 4, "#3E3940"); }
     else if (o.kind === "duck") { oval(x + 24, y - 13, 23, 13, "#FFCD56"); oval(x + 40, y - 26, 12, 11, "#FFE37A"); oval(x + 52, y - 25, 7, 4, "#E77740"); oval(x + 43, y - 29, 2.4, 2.4, "#283043"); }
@@ -344,8 +404,8 @@ export default {
   vignette: () => `<svg viewBox="0 0 160 120" aria-hidden="true"><rect width="160" height="120" rx="16" fill="#BFEAD3"/><rect y="84" width="160" height="36" fill="#6B5039"/><rect y="80" width="160" height="7" fill="#A6D96A"/><ellipse cx="50" cy="62" rx="16" ry="12" fill="#55D6A7"/><ellipse cx="110" cy="80" rx="14" ry="5" fill="#78D7DE"/></svg>`,
   rules: {
     text: session => session.count === 1
-      ? "Touche l'écran pour sauter, et touche encore en l'air pour un double saut ! Évite les obstacles et ramasse les pièces."
-      : "Chacun touche son couloir pour sauter, et encore une fois en l'air pour un double saut. Trois chocs et c'est plouf ! La dernière grenouille gagne.",
+      ? "Touche l'écran pour sauter, et encore une fois en l'air pour un double saut ! Saute les obstacles et les mares, mais reste au sol quand une abeille vole haut."
+      : "Chacun touche son couloir pour sauter, et encore une fois en l'air pour un double saut. Attention aux mares et aux abeilles ! Trois chocs et c'est plouf : la dernière grenouille gagne.",
     demo
   },
   levels: LEVELS,

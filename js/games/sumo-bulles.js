@@ -1,6 +1,6 @@
 // Sumo-bulles : pousser les autres bulles hors d'une banquise qui rétrécit.
 // Un seul geste : la flèche tourne toute seule ; maintenir pour charger, lâcher pour foncer.
-import { SEATS, robotArt, shapeSVG, icon } from "../core/art.js";
+import { SEATS, robotArt, shapeSVG, icon, hasImage, imagePath } from "../core/art.js";
 import { play, say } from "../core/sound.js";
 import { h } from "../core/ui.js";
 import { createStage, createLoop, artImage, seatAt, text, createParticles } from "../core/stage.js";
@@ -18,12 +18,12 @@ const LEVELS = [
   { robots: [1, 1], rounds: 3, stars: [1, 2, 3], holes: false, floe: 400, goal: "Deux robots faciles. Reste au milieu de la banquise !" },
   { robots: [2], rounds: 3, stars: [1, 2, 3], holes: false, floe: 400, goal: "Un robot plus malin. Attends le bon moment pour foncer !" },
   { robots: [1, 2], rounds: 3, stars: [1, 2, 3], holes: true, floe: 400, goal: "Des trous apparaissent dans la glace. Ne tombe pas dedans !" },
-  { robots: [2, 2], rounds: 4, stars: [1, 2, 3], holes: true, floe: 400, goal: "Deux robots moyens et des trous. Laisse-les se pousser entre eux !" },
-  { robots: [1, 1, 2], rounds: 4, stars: [1, 2, 3], holes: false, floe: 400, goal: "Trois robots sur la banquise ! Le dernier debout gagne." },
-  { robots: [2, 3], rounds: 4, stars: [1, 2, 3], holes: true, floe: 400, goal: "Voici le robot fort. Méfie-toi de ses attaques !" },
-  { robots: [3], rounds: 4, stars: [1, 2, 3], holes: true, floe: 330, goal: "Seul contre le robot fort, sur une petite banquise !" },
-  { robots: [2, 2, 3], rounds: 5, stars: [1, 3, 4], holes: true, floe: 400, goal: "Trois robots, dont un fort. Courage !" },
-  { robots: [3, 3, 3], rounds: 5, stars: [1, 3, 4], holes: true, floe: 360, goal: "Le défi des champions : trois robots forts !" }
+  { shield: true, robots: [2, 2], rounds: 4, stars: [1, 2, 3], holes: true, floe: 400, goal: "Deux robots moyens et des trous. Laisse-les se pousser entre eux !" },
+  { shield: true, robots: [1, 1, 2], rounds: 4, stars: [1, 2, 3], holes: false, floe: 400, goal: "Trois robots sur la banquise ! Le dernier debout gagne." },
+  { shield: true, seal: true, robots: [2, 3], rounds: 4, stars: [1, 2, 3], holes: true, floe: 400, goal: "Voici le robot fort. Méfie-toi de ses attaques !" },
+  { shield: true, seal: true, robots: [3], rounds: 4, stars: [1, 2, 3], holes: true, floe: 330, goal: "Seul contre le robot fort, sur une petite banquise !" },
+  { shield: true, seal: true, robots: [2, 2, 3], rounds: 5, stars: [1, 3, 4], holes: true, floe: 400, goal: "Trois robots, dont un fort. Courage !" },
+  { shield: true, seal: true, robots: [3, 3, 3], rounds: 5, stars: [1, 3, 4], holes: true, floe: 360, goal: "Le défi des champions : trois robots forts !" }
 ];
 const SPIN = 2.0;               // vitesse de rotation de la flèche (radians par seconde)
 const FULL_CHARGE = 0.85;       // secondes pour une charge complète
@@ -76,6 +76,14 @@ function mount(root, ctx) {
   const g = stage.ctx;
   const particles = createParticles();
   const padOf = i => node.querySelector(`.pad-${i}`);
+  // Images du lot 4 (null si absentes : on garde le dessin).
+  const picture = name => hasImage(`sumo-bulles/${name}`) ? artImage(`<img src="${imagePath(`sumo-bulles/${name}`)}">`) : null;
+  const IMG = { ocean: picture("fond-ocean.jpg"), floe: picture("banquise.png"), cracked: picture("banquise-fissuree.png"), seal: picture("phoque.png"), shield: picture("bonus-bouclier.png"), splash: picture("eclaboussure.png") };
+  const ready = img => img && img.complete && img.naturalWidth;
+  // Phoque qui traverse la banquise, bouclier à ramasser.
+  const useSeal = solo ? (level ? !!level.seal : true) : true;
+  const useShield = solo ? (level ? !!level.shield : true) : true;
+  let seal = null, sealTimer = 0, shield = null, shieldTimer = 0, splashes = [];
 
   let round = 0, phase = "countdown", timer = 0, floe = 400, floeMin = 210, holes = [], holeTimer = 0, bubbles = [], message = null, roundTime = 0;
 
@@ -87,6 +95,9 @@ function mount(root, ctx) {
     holes = [];
     holeTimer = 5;
     message = null;
+    seal = null; sealTimer = between(9, 13);
+    shield = null; shieldTimer = between(5, 8);
+    splashes = [];
     const n = players.length;
     bubbles = players.map((p, i) => {
       const a = START_ANGLE[n][i];
@@ -99,7 +110,7 @@ function mount(root, ctx) {
         spin: i % 2 ? -SPIN : SPIN,
         charging: false, charge: 0, cooldown: 0,
         alive: true, fall: 0,
-        mass: 1 + (p.boost || 0) * 0.3,
+        mass: 1 + (p.boost || 0) * 0.3, shield: 0,
         image: artImage(p.kind === "robot" ? robotArt(force) : p.art),
         ai: { wait: between(0.3, 1), hold: 0 }
       };
@@ -242,6 +253,34 @@ function mount(root, ctx) {
       holeTimer -= dt;
       if (holeTimer <= 0) { spawnHole(); holeTimer = Math.max(3.5, 7 - round); }
     }
+    if (useSeal && (solo || round >= 1)) {
+      sealTimer -= dt;
+      if (sealTimer <= 0 && !seal) {
+        const a = Math.random() * Math.PI * 2, turn = between(-0.3, 0.3);
+        seal = { x: CX + Math.cos(a) * 560, y: CY + Math.sin(a) * 560, vx: -Math.cos(a + turn) * 230, vy: -Math.sin(a + turn) * 230, wobble: 0 };
+        sealTimer = between(10, 15);
+        play("trap");
+      }
+    }
+    if (seal) {
+      seal.x += seal.vx * dt; seal.y += seal.vy * dt; seal.wobble += dt * 8;
+      if (Math.hypot(seal.x - CX, seal.y - CY) > 620) seal = null;
+    }
+    if (useShield && !shield) {
+      shieldTimer -= dt;
+      if (shieldTimer <= 0) {
+        const a = Math.random() * Math.PI * 2, d = Math.random() * (floe - 140);
+        shield = { x: CX + Math.cos(a) * d, y: CY + Math.sin(a) * d, t: 0 };
+        shieldTimer = between(9, 13);
+      }
+    }
+    if (shield) {
+      shield.t += dt;
+      const taker = bubbles.find(b => b.alive && Math.hypot(b.x - shield.x, b.y - shield.y) < BUBBLE + 30);
+      if (taker) { taker.shield = 6; shield = null; play("star"); particles.burst(taker.x, taker.y, "#FFC83D", { count: 14, speed: 220, size: 8, life: 0.6 }); }
+      else if (Math.hypot(shield.x - CX, shield.y - CY) > floe - 30) shield = null;
+    }
+    for (const b of bubbles) b.shield = Math.max(0, b.shield - dt);
     for (const hole of holes) hole.r = Math.min(hole.max, hole.r + dt * (hole.r < 4 ? 2 : 40) * (hole.warn > 0 ? 0 : 1)), hole.warn -= dt;
     for (const b of bubbles) {
       if (!b.alive) continue;
@@ -258,6 +297,7 @@ function mount(root, ctx) {
       const inHole = holes.some(hole => hole.warn <= 0 && Math.hypot(hole.x - b.x, hole.y - b.y) < hole.r - BUBBLE * 0.25);
       if (out || inHole) {
         b.alive = false;
+        splashes.push({ x: b.x, y: b.y, age: 0 });
         b.charging = false;
         particles.burst(b.x, b.y, "#E6F7FF", { count: 22, speed: 320, size: 10, life: 0.8 });
         particles.burst(b.x, b.y, b.p.color, { count: 8, speed: 200, size: 8, life: 0.6 });
@@ -279,6 +319,17 @@ function mount(root, ctx) {
         b.x += b.vx * t;
         b.y += b.vy * t;
       }
+      // Le phoque bouscule les bulles (il est bien plus lourd qu'elles).
+      if (seal) for (const b of bubbles) {
+        if (!b.alive) continue;
+        const dx = b.x - seal.x, dy = b.y - seal.y, dist = Math.hypot(dx, dy) || 1;
+        if (dist >= BUBBLE + 44) continue;
+        const nx = dx / dist, ny = dy / dist;
+        b.x = seal.x + nx * (BUBBLE + 44);
+        b.y = seal.y + ny * (BUBBLE + 44);
+        const push = (b.vx - seal.vx) * nx + (b.vy - seal.vy) * ny;
+        if (push < 0) { const k = b.shield > 0 ? 0.6 : 1.8; b.vx -= push * nx * k; b.vy -= push * ny * k; play("tap"); }
+      }
       for (let i = 0; i < bubbles.length; i++) {
         for (let j = i + 1; j < bubbles.length; j++) {
           const a = bubbles[i], c = bubbles[j];
@@ -286,14 +337,16 @@ function mount(root, ctx) {
           const dx = c.x - a.x, dy = c.y - a.y, dist = Math.hypot(dx, dy) || 1;
           if (dist >= BUBBLE * 2) continue;
           const nx = dx / dist, ny = dy / dist, overlap = BUBBLE * 2 - dist;
-          const total = a.mass + c.mass;
-          a.x -= nx * overlap * (c.mass / total); a.y -= ny * overlap * (c.mass / total);
-          c.x += nx * overlap * (a.mass / total); c.y += ny * overlap * (a.mass / total);
+          // Avec le bouclier, une bulle pèse trois fois plus lourd.
+          const ma = a.mass * (a.shield > 0 ? 3 : 1), mc = c.mass * (c.shield > 0 ? 3 : 1);
+          const total = ma + mc;
+          a.x -= nx * overlap * (mc / total); a.y -= ny * overlap * (mc / total);
+          c.x += nx * overlap * (ma / total); c.y += ny * overlap * (ma / total);
           const relative = (c.vx - a.vx) * nx + (c.vy - a.vy) * ny;
           if (relative >= 0) continue;
-          const impulse = -(1 + 0.95) * relative / (1 / a.mass + 1 / c.mass);
-          a.vx -= impulse * nx / a.mass; a.vy -= impulse * ny / a.mass;
-          c.vx += impulse * nx / c.mass; c.vy += impulse * ny / c.mass;
+          const impulse = -(1 + 0.95) * relative / (1 / ma + 1 / mc);
+          a.vx -= impulse * nx / ma; a.vy -= impulse * ny / ma;
+          c.vx += impulse * nx / mc; c.vy += impulse * ny / mc;
           if (-relative > 120) {
             particles.burst((a.x + c.x) / 2, (a.y + c.y) / 2, "#ffffff", { count: 6, speed: 180, size: 6, life: 0.35 });
             play("tap");
@@ -355,11 +408,15 @@ function mount(root, ctx) {
   function draw() {
     stage.begin();
     // L'eau
+    if (ready(IMG.ocean)) {
+      const k = W / IMG.ocean.naturalHeight;
+      g.drawImage(IMG.ocean, CX - IMG.ocean.naturalWidth * k / 2, 0, IMG.ocean.naturalWidth * k, W);
+    }
     const sea = g.createRadialGradient(CX, CY, 200, CX, CY, 760);
     sea.addColorStop(0, "#7FD0F2");
     sea.addColorStop(1, "#3C93CC");
     g.fillStyle = sea;
-    g.fillRect(0, 0, W, W);
+    if (!ready(IMG.ocean)) g.fillRect(0, 0, W, W);
     g.strokeStyle = "#ffffff33";
     g.lineWidth = 5;
     g.lineCap = "round";
@@ -371,7 +428,12 @@ function mount(root, ctx) {
       g.quadraticCurveTo(x + 20, y - 10, x + 40, y);
       g.stroke();
     }
-    // La banquise
+    // La banquise (image du lot 4, fissurée quand la manche s'éternise)
+    const floeImg = roundTime > 25 && ready(IMG.cracked) ? IMG.cracked : IMG.floe;
+    if (ready(floeImg)) {
+      const size = floe * 2.12;
+      g.drawImage(floeImg, CX - size / 2, CY - size / 2, size, size);
+    } else {
     g.fillStyle = "#3B7FB0";
     g.beginPath(); g.ellipse(CX, CY + 16, floe, floe, 0, 0, Math.PI * 2); g.fill();
     const ice = g.createRadialGradient(CX - floe * 0.3, CY - floe * 0.3, 20, CX, CY, floe);
@@ -385,6 +447,7 @@ function mount(root, ctx) {
     g.strokeStyle = "#ffffffaa";
     g.lineWidth = 8;
     g.beginPath(); g.arc(CX, CY, floe * 0.82, Math.PI * 1.1, Math.PI * 1.45); g.stroke();
+    }
     // Les trous
     for (const hole of holes) {
       if (hole.warn > 0) {
@@ -400,8 +463,29 @@ function mount(root, ctx) {
       g.beginPath(); g.arc(hole.x, hole.y, hole.r, 0, Math.PI * 2); g.fill();
       g.strokeStyle = "#A9DDF3"; g.lineWidth = 5; g.stroke();
     }
-    // Les bulles
+    // Bouclier à ramasser, éclaboussures
+    if (shield) {
+      const bob = Math.sin(shield.t * 4) * 6, size = 70;
+      if (ready(IMG.shield)) g.drawImage(IMG.shield, shield.x - size / 2, shield.y - size / 2 + bob, size, size);
+      else { g.fillStyle = "#FFC83D"; g.beginPath(); g.arc(shield.x, shield.y + bob, 26, 0, Math.PI * 2); g.fill(); }
+    }
+    for (const sp of splashes) {
+      sp.age += 1 / 60;
+      if (sp.age > 0.9) continue;
+      const size = 90 + sp.age * 160;
+      g.globalAlpha = 1 - sp.age / 0.9;
+      if (ready(IMG.splash)) g.drawImage(IMG.splash, sp.x - size / 2, sp.y - size / 2, size, size);
+      g.globalAlpha = 1;
+    }
+    splashes = splashes.filter(sp => sp.age <= 0.9);
+    // Les bulles, puis le phoque par-dessus
     for (const b of bubbles) drawBubble(b);
+    if (seal) {
+      g.save(); g.translate(seal.x, seal.y); g.rotate(Math.atan2(seal.vy, seal.vx) + Math.PI / 2 + Math.sin(seal.wobble) * 0.08);
+      if (ready(IMG.seal)) g.drawImage(IMG.seal, -60, -60, 120, 120);
+      else { g.fillStyle = "#A3ABC0"; g.beginPath(); g.ellipse(0, 0, 30, 46, 0, 0, Math.PI * 2); g.fill(); }
+      g.restore();
+    }
     particles.draw(g);
     // Annonces
     if (phase === "countdown") {
@@ -451,6 +535,12 @@ function mount(root, ctx) {
     g.beginPath(); g.arc(0, 0, BUBBLE, 0, Math.PI * 2); g.stroke();
     g.fillStyle = "#ffffff99";
     g.beginPath(); g.ellipse(-BUBBLE * 0.42, -BUBBLE * 0.5, BUBBLE * 0.22, BUBBLE * 0.12, -0.6, 0, Math.PI * 2); g.fill();
+    // Bouclier
+    if (b.shield > 0 && b.alive) {
+      g.strokeStyle = Math.floor(b.shield * 6) % 2 && b.shield < 1.5 ? "#FFC83D55" : "#FFC83D";
+      g.lineWidth = 8;
+      g.beginPath(); g.arc(0, 0, BUBBLE + 6, 0, Math.PI * 2); g.stroke();
+    }
     // Jauge de charge
     if (b.charging) {
       g.strokeStyle = "#fff";

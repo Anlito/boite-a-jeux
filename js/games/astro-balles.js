@@ -5,7 +5,7 @@ import { play, say } from "../core/sound.js";
 import { h } from "../core/ui.js";
 import { createStage, createLoop, text, createParticles } from "../core/stage.js";
 
-const W = 1000, R = 14, EDGE = 46, THICK = 22, PADDLE = 190;
+const R = 14, EDGE = 46, THICK = 22, PADDLE = 190;
 const SIDES = { 1: ["bottom"], 2: ["bottom", "top"], 3: ["bottom", "top", "left"], 4: ["bottom", "top", "left", "right"] };
 const ROBOT = { 1: { speed: 320, error: 70, react: 0.35 }, 2: { speed: 520, error: 35, react: 0.18 }, 3: { speed: 780, error: 12, react: 0.06 } };
 const HEARTS = 3;
@@ -35,13 +35,17 @@ function mount(root, ctx) {
     ? [ctx.seats[0], ...setup.robots.map((force, k) => ({ ...SEATS[k + 1], kind: "robot", level: force, label: "Robot", art: robotArt(force), boost: 0, index: k + 1 }))]
     : ctx.seats;
   const sides = SIDES[people.length];
-  const stage = createStage(root, { width: W, height: W, background: "#1C1745" });
+  // Le terrain prend la forme de l'écran : 1000 unités de haut, la largeur suit.
+  const FH = 1000, FW = Math.round(Math.max(560, Math.min(2200, FH * window.innerWidth / window.innerHeight)));
+  const span = side => (side === "bottom" || side === "top") ? FW : FH;   // longueur d'un côté
+  const stage = createStage(root, { width: FW, height: FH, background: "#1C1745" });
   const g = stage.ctx;
   const particles = createParticles();
 
   const players = people.map((p, i) => ({
-    seat: i, p, side: sides[i], pos: W / 2, target: W / 2, hearts: HEARTS, out: false, big: 0, flash: 0,
-    length: PADDLE * (1 + (p.boost || 0) * 0.18), ai: { wait: 0, aim: W / 2 }
+    seat: i, p, side: sides[i], pos: span(sides[i]) / 2, target: span(sides[i]) / 2, hearts: HEARTS, out: false, big: 0, flash: 0,
+    // Raquette proportionnelle à son côté : un grand côté n'est pas plus dur à défendre.
+    length: PADDLE * Math.sqrt(span(sides[i]) / 1000) * (1 + (p.boost || 0) * 0.18), ai: { wait: 0, aim: span(sides[i]) / 2 }
   }));
   const bySide = side => players.find(pl => pl.side === side && !pl.out);
   let balls = [], hazard = null, bonus = null, phase = "serve", timer = 2.2, clock = 0, bonusTimer = 8, hazardTimer = 14, eliminated = [], message = null;
@@ -52,7 +56,7 @@ function mount(root, ctx) {
     const toward = alive[Math.floor(Math.random() * alive.length)];
     const base = { bottom: Math.PI / 2, top: -Math.PI / 2, left: Math.PI, right: 0 }[toward.side];
     const a = base + between(-0.5, 0.5);
-    balls.push({ x: W / 2, y: W / 2, vx: Math.cos(a) * setup.speed, vy: Math.sin(a) * setup.speed, last: null, trail: [] });
+    balls.push({ x: FW / 2, y: FH / 2, vx: Math.cos(a) * setup.speed, vy: Math.sin(a) * setup.speed, last: null, trail: [] });
     phase = "serve";
     timer = 1.4;
   }
@@ -60,7 +64,7 @@ function mount(root, ctx) {
   /* ---------- Géométrie des côtés ---------- */
 
   // Ligne de la raquette d'un côté, et axe le long duquel elle glisse.
-  const lineOf = side => ({ bottom: W - EDGE, top: EDGE, left: EDGE, right: W - EDGE })[side];
+  const lineOf = side => ({ bottom: FH - EDGE, top: EDGE, left: EDGE, right: FW - EDGE })[side];
   const along = (side, ball) => (side === "bottom" || side === "top") ? ball.x : ball.y;
   const across = (side, ball) => (side === "bottom" || side === "top") ? ball.y : ball.x;
   const inward = side => ({ bottom: -1, top: 1, left: 1, right: -1 })[side];
@@ -73,7 +77,7 @@ function mount(root, ctx) {
     const humans = players.filter(pl => pl.p.kind === "human" && !pl.out);
     let best = null, gap = Infinity;
     for (const pl of humans) {
-      const d = { bottom: W - point.y, top: point.y, left: point.x, right: W - point.x }[pl.side];
+      const d = { bottom: FH - point.y, top: point.y, left: point.x, right: FW - point.x }[pl.side];
       if (d < gap) { gap = d; best = pl; }
     }
     return solo ? players[0] : best;
@@ -118,12 +122,12 @@ function mount(root, ctx) {
       const coming = balls.filter(b => (across(pl.side, b) - lineOf(pl.side)) * inward(pl.side) > 0 &&
         ({ bottom: b.vy > 0, top: b.vy < 0, left: b.vx < 0, right: b.vx > 0 })[pl.side]);
       const ball = coming.sort((a, b) => Math.abs(across(pl.side, a) - lineOf(pl.side)) - Math.abs(across(pl.side, b) - lineOf(pl.side)))[0];
-      let aim = W / 2;
+      let aim = span(pl.side) / 2;
       if (ball) aim = along(pl.side, ball) + between(-rules.error, rules.error);
       // Éviter la balle rouge quand elle arrive.
       if (hazard && Math.abs(across(pl.side, hazard) - lineOf(pl.side)) < 260) {
         const h0 = along(pl.side, hazard);
-        if (Math.abs(h0 - aim) < half(pl) + 40) aim = h0 < W / 2 ? h0 + half(pl) + 70 : h0 - half(pl) - 70;
+        if (Math.abs(h0 - aim) < half(pl) + 40) aim = h0 < span(pl.side) / 2 ? h0 + half(pl) + 70 : h0 - half(pl) - 70;
       }
       pl.ai.aim = aim;
     }
@@ -146,7 +150,7 @@ function mount(root, ctx) {
       if (pl.seat === 0 && (keys.has("ArrowLeft") || keys.has("ArrowRight"))) pl.target = pl.pos + (keys.has("ArrowRight") - keys.has("ArrowLeft")) * 80;
       if (pl.seat === 1 && (keys.has("q") || keys.has("d"))) pl.target = pl.pos + (keys.has("d") - keys.has("q")) * 80;
       pl.pos += clamp(pl.target - pl.pos, -speed * dt, speed * dt);
-      pl.pos = clamp(pl.pos, EDGE + half(pl), W - EDGE - half(pl));
+      pl.pos = clamp(pl.pos, EDGE + half(pl), span(pl.side) - EDGE - half(pl));
     }
     if (phase === "serve") {
       timer -= dt;
@@ -157,14 +161,14 @@ function mount(root, ctx) {
     // Bonus et balle rouge
     if (setup.bonus) {
       bonusTimer -= dt;
-      if (bonusTimer <= 0 && !bonus) { bonus = { x: between(320, 680), y: between(320, 680), kind: Math.random() < 0.5 ? "grand" : "multi", spin: 0 }; bonusTimer = between(9, 14); }
+      if (bonusTimer <= 0 && !bonus) { bonus = { x: between(FW * 0.3, FW * 0.7), y: between(FH * 0.3, FH * 0.7), kind: Math.random() < 0.5 ? "grand" : "multi", spin: 0 }; bonusTimer = between(9, 14); }
       if (bonus) bonus.spin += dt * 3;
     }
     if (setup.hazard) {
       hazardTimer -= dt;
       if (hazardTimer <= 0 && !hazard) {
         const a = Math.random() * Math.PI * 2;
-        hazard = { x: W / 2, y: W / 2, vx: Math.cos(a) * 260, vy: Math.sin(a) * 260, warn: 1, trail: [] };
+        hazard = { x: FW / 2, y: FH / 2, vx: Math.cos(a) * 260, vy: Math.sin(a) * 260, warn: 1, trail: [] };
         hazardTimer = between(10, 16);
         play("trap");
       }
@@ -209,7 +213,7 @@ function mount(root, ctx) {
       if (depth < -R * 2) {
         if (isHazard) { hazard = null; return; }
         balls = balls.filter(b => b !== ball);
-        particles.burst(clamp(ball.x, 20, W - 20), clamp(ball.y, 20, W - 20), pl.p.color, { count: 16, speed: 260, size: 8, life: 0.6 });
+        particles.burst(clamp(ball.x, 20, FW - 20), clamp(ball.y, 20, FH - 20), pl.p.color, { count: 16, speed: 260, size: 8, life: 0.6 });
         hurt(pl, null);
         if (phase === "play" && !balls.length) serve();
         return;
@@ -300,29 +304,29 @@ function mount(root, ctx) {
 
   function draw() {
     stage.begin();
-    const sky = g.createRadialGradient(W / 2, W / 2, 60, W / 2, W / 2, 720);
+    const sky = g.createRadialGradient(FW / 2, FH / 2, 60, FW / 2, FH / 2, Math.max(FW, FH) * 0.75);
     sky.addColorStop(0, "#3B2F86");
     sky.addColorStop(1, "#1C1745");
     g.fillStyle = sky;
-    g.fillRect(0, 0, W, W);
-    for (let i = 0; i < 70; i++) {
+    g.fillRect(0, 0, FW, FH);
+    for (let i = 0; i < Math.round(70 * FW / FH); i++) {
       g.fillStyle = i % 9 === 0 ? "#FFE7A3" : "#C9C2FF88";
-      g.beginPath(); g.arc((i * 137 + 31) % W, (i * 271 + 57) % W, i % 9 === 0 ? 3 : 1.6, 0, Math.PI * 2); g.fill();
+      g.beginPath(); g.arc((i * 137 + 31) % FW, (i * 271 + 57) % FH, i % 9 === 0 ? 3 : 1.6, 0, Math.PI * 2); g.fill();
     }
     g.fillStyle = "#FF9AA8aa"; g.beginPath(); g.arc(140, 160, 46, 0, Math.PI * 2); g.fill();
-    g.fillStyle = "#7FD0F2aa"; g.beginPath(); g.arc(870, 820, 30, 0, Math.PI * 2); g.fill();
+    g.fillStyle = "#7FD0F2aa"; g.beginPath(); g.arc(FW - 130, FH - 180, 30, 0, Math.PI * 2); g.fill();
     g.strokeStyle = "#ffffff22"; g.lineWidth = 3; g.setLineDash([14, 16]);
-    g.beginPath(); g.arc(W / 2, W / 2, 120, 0, Math.PI * 2); g.stroke();
+    g.beginPath(); g.arc(FW / 2, FH / 2, 120, 0, Math.PI * 2); g.stroke();
     g.setLineDash([]);
     // Murs des côtés sans joueur
     for (const side of ["bottom", "top", "left", "right"]) {
       if (bySide(side)) continue;
       g.fillStyle = "#8E78C9";
       const t = 10;
-      if (side === "bottom") g.fillRect(0, W - t, W, t);
-      if (side === "top") g.fillRect(0, 0, W, t);
-      if (side === "left") g.fillRect(0, 0, t, W);
-      if (side === "right") g.fillRect(W - t, 0, t, W);
+      if (side === "bottom") g.fillRect(0, FH - t, FW, t);
+      if (side === "top") g.fillRect(0, 0, FW, t);
+      if (side === "left") g.fillRect(0, 0, t, FH);
+      if (side === "right") g.fillRect(FW - t, 0, t, FH);
     }
     // Bonus
     if (bonus) {
@@ -344,7 +348,7 @@ function mount(root, ctx) {
       g.fill();
       g.restore();
       const hearts = "♥".repeat(pl.hearts) + "♡".repeat(Math.max(0, HEARTS - pl.hearts));
-      const pos = { bottom: [W / 2, W - 16, 0], top: [W / 2, 16, Math.PI], left: [16, W / 2, Math.PI / 2], right: [W - 16, W / 2, -Math.PI / 2] }[pl.side];
+      const pos = { bottom: [FW / 2, FH - 16, 0], top: [FW / 2, 16, Math.PI], left: [16, FH / 2, Math.PI / 2], right: [FW - 16, FH / 2, -Math.PI / 2] }[pl.side];
       text(g, hearts, pos[0], pos[1], { size: 34, color: "#FF9AA8", rotate: pos[2] });
     }
     // Balles
@@ -365,10 +369,10 @@ function mount(root, ctx) {
       }
     }
     particles.draw(g);
-    if (phase === "serve") text(g, "Prêt ?", W / 2, W / 2 + 70, { size: 56, color: "#fff", stroke: "#1C1745" });
+    if (phase === "serve") text(g, "Prêt ?", FW / 2, FH / 2 + 70, { size: 56, color: "#fff", stroke: "#1C1745" });
     if (message) {
       message.time -= 1 / 60;
-      text(g, message.text, W / 2, W / 2 - 80, { size: 50, color: "#fff", stroke: "#1C1745" });
+      text(g, message.text, FW / 2, FH / 2 - 80, { size: 50, color: "#fff", stroke: "#1C1745" });
       if (message.time <= 0) message = null;
     }
   }
