@@ -1,0 +1,15 @@
+{
+  "name": "La boîte à jeux",
+  "short_name": "Boîte à jeux",
+  "description": "Des mini-jeux pour jouer seul, contre un robot ou jusqu'à 4 sur le même écran.",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#FFF6E8",
+  "theme_color": "#FFF6E8",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
