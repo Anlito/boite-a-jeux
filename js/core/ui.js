@@ -1,5 +1,5 @@
 // Petits outils d'interface partagés par les écrans.
-import { icon, SEATS, avatarArt, robotArt, AVATARS, ROBOTS } from "./art.js";
+import { icon, iconArt, SEATS, avatarArt, robotArt, AVATARS, ROBOTS } from "./art.js";
 import { store } from "./store.js";
 import { play } from "./sound.js";
 
@@ -14,7 +14,7 @@ export function on(root, selector, type, handler) {
 }
 
 export function iconButton(name, label, extra = "") {
-  return `<button class="icon-btn ${extra}" aria-label="${label}" title="${label}">${icon(name)}</button>`;
+  return `<button class="icon-btn ${extra}" aria-label="${label}" title="${label}">${iconArt(name)}</button>`;
 }
 
 export function modal(content, { onClose } = {}) {

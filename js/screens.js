@@ -4,7 +4,7 @@ import { store } from "./core/store.js";
 import { play, say } from "./core/sound.js";
 import { h, on, modal, iconButton, describeSeat } from "./core/ui.js";
 import { enterGameOrientation } from "./core/orientation.js";
-import { SEATS, AVATARS, ROBOTS, avatarArt, robotArt, mascotArt, icon, starSVG, peopleSVG, shapeSVG } from "./core/art.js";
+import { SEATS, AVATARS, ROBOTS, avatarArt, robotArt, mascotArt, icon, iconArt, starSVG, peopleArt, shapeSVG } from "./core/art.js";
 
 const stars = (count, total = 3) => `<span class="stars">${Array.from({ length: total }, (_, i) => starSVG(i < count)).join("")}</span>`;
 
@@ -63,7 +63,7 @@ export function count(app, { game }) {
   const buttons = [1, 2, 3, 4].map(n => {
     const ok = n >= game.players.min && n <= game.players.max;
     return `<button class="count-btn" data-count="${n}" ${ok ? "" : "disabled"} aria-label="${n} joueur${n > 1 ? "s" : ""}">
-      <span class="count-art">${peopleSVG(n, "currentColor")}</span><span class="count-num">${n}</span></button>`;
+      <span class="count-art">${peopleArt(n, "currentColor")}</span><span class="count-num">${n}</span></button>`;
   }).join("");
   const node = h(`<main class="screen setup">${topBar(game.title, "Retour à l'accueil")}
     <p class="ask">Combien de joueurs ?</p>
@@ -223,7 +223,7 @@ function playScreen(app, { session }) {
   const node = h(`<main class="screen play">
     <div class="play-root"></div>
     <button class="hold-pause" aria-label="Pause (garder le doigt appuyé)" title="Pause : garder le doigt appuyé">
-      <svg viewBox="0 0 40 40" aria-hidden="true"><circle class="ring" cx="20" cy="20" r="17"/></svg>${icon("pause")}
+      <svg viewBox="0 0 40 40" aria-hidden="true"><circle class="ring" cx="20" cy="20" r="17"/></svg>${iconArt("pause")}
     </button>
   </main>`);
   const seats = session.seats.map((seat, i) => ({ ...describeSeat(seat, i), index: i }));
@@ -255,7 +255,7 @@ function playScreen(app, { session }) {
     if (paused || finished) return;
     paused = true;
     instance.pause?.();
-    const content = h(`<div class="pause-panel"><span class="pause-mascot">${mascotArt("salut")}</span><h3>Pause</h3>
+    const content = h(`<div class="pause-panel"><span class="pause-mascot">${mascotArt("surprise")}</span><h3>Pause</h3>
       <button class="btn primary wide resume">${icon("lecture")} Reprendre</button>
       <button class="btn wide restart">${icon("rejouer")} Recommencer</button>
       <button class="btn wide quit">${icon("accueil")} Accueil</button></div>`);
@@ -306,7 +306,7 @@ export function podium(app, { session, result }) {
     const player = seats[0];
     const saved = store.record(player.profile.id, game.id, { stars: result.solo.stars, value: result.solo.value, lowerIsBetter: result.solo.lowerIsBetter });
     headline = result.solo.stars >= 3 ? "Incroyable !" : result.solo.stars === 2 ? "Super !" : result.solo.stars === 1 ? "Bien joué !" : "Essaie encore !";
-    if (!result.solo.stars) mood = "salut";
+    if (!result.solo.stars) mood = "triste";
     body = `<div class="solo-result" style="--seat:${player.color};--seat-soft:${player.soft}">
       <span class="solo-art">${player.art}</span>
       <div class="big-stars">${stars(result.solo.stars)}</div>

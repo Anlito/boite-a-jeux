@@ -1,10 +1,11 @@
-// Dessins vectoriels de l'application.
-// Quand les images du brief arriveront (assets/...), on les déclare dans IMAGES
-// et elles remplacent automatiquement le dessin de secours correspondant.
+// Dessins de l'application.
+// Les images livrées (assets/…, listées dans images-list.js) remplacent automatiquement
+// le dessin vectoriel de secours qui porte le même nom.
+import "./images-list.js";
 
-const IMAGES = new Set([
-  // ex. "commun/avatars/avatar-renard.png"
-]);
+const IMAGES = new Set(globalThis.ASSET_IMAGES || []);
+export const hasImage = path => IMAGES.has(path);
+export const imagePath = path => `assets/${path}`;
 
 const INK = "#2B2350";
 
@@ -45,7 +46,11 @@ export const AVATARS = {
   grenouille: { label: "Grenouille", fur: "#7CC86B" },
   pingouin: { label: "Pingouin", fur: "#3A3F66" },
   panda: { label: "Panda", fur: "#FBFBFB" },
-  hibou: { label: "Hibou", fur: "#9C7A5B" }
+  hibou: { label: "Hibou", fur: "#9C7A5B" },
+  dino: { label: "Dino", fur: "#8BC97A" },
+  licorne: { label: "Licorne", fur: "#F6E8FF" },
+  poulpe: { label: "Poulpe", fur: "#B9A6F2" },
+  tortue: { label: "Tortue", fur: "#86C99A" }
 };
 
 const eyes = (y = 54, gap = 11, r = 4.6) =>
@@ -183,12 +188,21 @@ const ICONS = {
   trophee: `<path d="M7 4 H17 V9 A5 5 0 0 1 7 9 Z" fill="currentColor"/><path d="M7 6 H3.5 Q3.5 11 7.5 11 M17 6 H20.5 Q20.5 11 16.5 11"/><path d="M12 14 V18 M8 20 H16"/>`
 };
 
+// Icône dessinée en image (violette) : seulement sur fond clair. Sinon l'icône vectorielle.
+export function iconArt(name) {
+  return picture(`commun/icones/${name}.png`, icon(name), "");
+}
+
 export function icon(name) {
   return `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ""}</svg>`;
 }
 
 export function starSVG(filled) {
   return `<svg viewBox="0 0 100 100" aria-hidden="true"><path d="${shapePath("etoile")}" fill="${filled ? "#FFC83D" : "#E9DFCB"}" stroke="${filled ? "#E59A00" : "#D5C8AE"}" stroke-width="5" stroke-linejoin="round"/></svg>`;
+}
+
+export function peopleArt(count, color = INK) {
+  return picture(`commun/icones/${count === 1 ? "joueur-1" : "joueurs-" + count}.png`, peopleSVG(count, color), "");
 }
 
 export function peopleSVG(count, color = INK) {

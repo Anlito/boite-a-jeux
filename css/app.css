@@ -463,3 +463,15 @@ h1, h2, h3, h4, p { margin: 0; }
     transform: translateX(100vw) rotate(90deg);
   }
 }
+
+/* ---------- Images livrées ---------- */
+
+.icon-btn img { width: 34px; height: 34px; object-fit: contain; }
+.hold-pause img { position: relative; width: 26px; height: 26px; object-fit: contain; }
+.count-art img { width: 100%; max-width: 120px; margin: 0 auto; }
+.home-mascot img, .rules-mascot img, .podium-mascot img, .pause-mascot img { width: 100%; }
+#app[data-screen="home"] {
+  background:
+    linear-gradient(#FFF6E8e6, #FFF6E8cc 45%, #FFF6E8f2),
+    url("../assets/commun/fonds/accueil.jpg") center bottom / cover no-repeat fixed;
+}

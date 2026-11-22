@@ -420,7 +420,14 @@ function mount(root, ctx) {
     // Bulle
     g.fillStyle = b.p.soft;
     g.beginPath(); g.arc(0, 0, BUBBLE, 0, Math.PI * 2); g.fill();
-    if (b.image.complete && b.image.naturalWidth !== 0) g.drawImage(b.image, -BUBBLE * 0.82, -BUBBLE * 0.82, BUBBLE * 1.64, BUBBLE * 1.64);
+    if (b.image.complete && b.image.naturalWidth !== 0) {
+      // Image recadrée dans la bulle : les avatars livrés ont une marge autour du personnage.
+      g.save();
+      g.beginPath(); g.arc(0, 0, BUBBLE - 3, 0, Math.PI * 2); g.clip();
+      const size = BUBBLE * 2.15;
+      g.drawImage(b.image, -size / 2, -size / 2 + BUBBLE * 0.08, size, size);
+      g.restore();
+    }
     g.lineWidth = 7;
     g.strokeStyle = b.p.color;
     g.beginPath(); g.arc(0, 0, BUBBLE, 0, Math.PI * 2); g.stroke();
