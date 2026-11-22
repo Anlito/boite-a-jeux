@@ -615,3 +615,12 @@ h1, h2, h3, h4, p { margin: 0; }
 .td-zone.pressed .td-buzzer.pictured .up { display: none; }
 .td-zone.pressed .td-buzzer.pictured .down { display: block; }
 .td.n1::before { background: url("../assets/top-depart/fond.jpg") center 70% / cover no-repeat, var(--ink); }
+
+/* ---------- Course des grenouilles ---------- */
+.cg-demo { position: relative; width: 280px; height: 140px; border-radius: 26px; overflow: hidden; background: linear-gradient(#BFEAD3 70%, #A6D96A 70%, #A6D96A 74%, #6B5039 74%); }
+.cg-frog { position: absolute; left: 50px; bottom: 34px; width: 46px; height: 34px; border-radius: 50%; background: #55D6A7; box-shadow: inset 0 -6px 0 #2F80ED33; animation: cg-jump 1.6s infinite; }
+.cg-rock { position: absolute; bottom: 34px; width: 34px; height: 28px; border-radius: 12px 12px 4px 4px; background: #E75867; animation: cg-roll 1.6s linear infinite; }
+.cg-finger { position: absolute; right: 16px; top: 14px; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: #fff; color: #7B61FF; animation: press 1.6s infinite; }
+.cg-finger .icon { width: 22px; height: 22px; }
+@keyframes cg-roll { from { left: 300px; } to { left: -40px; } }
+@keyframes cg-jump { 0%, 40% { transform: none; } 55% { transform: translateY(-58px) rotate(-10deg); } 70%, 100% { transform: none; } }

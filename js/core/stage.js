@@ -2,7 +2,8 @@
 import { isTurned } from "./orientation.js";
 
 // Terrain de taille fixe (width × height), centré et mis à l'échelle sans jamais être déformé.
-export function createStage(root, { width, height, background = "#2B2350" }) {
+// flipped : le terrain est affiché retourné d'un demi-tour (joueur assis en face).
+export function createStage(root, { width, height, background = "#2B2350", flipped = false }) {
   const canvas = document.createElement("canvas");
   canvas.className = "stage";
   root.append(canvas);
@@ -39,6 +40,10 @@ export function createStage(root, { width, height, background = "#2B2350" }) {
         // Jeu tourné d'un quart de tour vers la droite : le haut du jeu est sur le bord droit de l'écran.
         x = clientY;
         y = window.innerWidth - clientX;
+      } else if (flipped) {
+        const box = canvas.getBoundingClientRect();
+        x = box.right - clientX;
+        y = box.bottom - clientY;
       } else {
         const box = canvas.getBoundingClientRect();
         x = clientX - box.left;
