@@ -437,13 +437,6 @@ h1, h2, h3, h4, p { margin: 0; }
 }
 .cn-banner-art { width: clamp(48px, 10vmin, 72px); aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; background: #fff; box-shadow: 0 0 0 4px var(--seat); }
 .cn-banner-art svg, .cn-banner-art img { width: 92%; }
-.cn-rotate { display: none; }
-@media (orientation: portrait) {
-  .cn-rotate {
-    position: absolute; left: 50%; bottom: 12%; translate: -50% 0; display: flex; align-items: center; gap: 8px;
-    padding: 10px 18px; border-radius: 99px; background: #2B2350d9; color: #fff; font-weight: 600; font-size: 1.1rem;
-  }
-}
 
 .cn-demo { position: relative; width: 300px; height: 150px; border-radius: 26px; overflow: hidden; background: linear-gradient(#9FDBFF, #FFF1D6); }
 .cn-demo-hill { position: absolute; left: -20px; right: -20px; bottom: -60px; height: 110px; border-radius: 50%; background: #D9A066; box-shadow: inset 0 8px 0 #6CBF5A; }
@@ -458,3 +451,15 @@ h1, h2, h3, h4, p { margin: 0; }
 @keyframes hitme { 0%, 88% { transform: none; } 92% { transform: translateX(4px) rotate(4deg); filter: brightness(1.6); } 96%, 100% { transform: none; } }
 .cn-banner[hidden] { display: none; }
 .play:has(.sumo.n3) .hold-pause, .play:has(.sumo.n4) .hold-pause { top: 50%; transform: translateY(-50%); }
+
+/* Jeu en paysage sur un écran en portrait : on l'affiche tourné d'un quart de tour
+   (voir js/core/orientation.js). La fenêtre de pause suit le même sens. */
+@media (orientation: portrait) {
+  body.want-landscape .screen.play,
+  body.want-landscape .modal-layer {
+    inset: auto; top: 0; left: 0;
+    width: 100vh; width: 100dvh; height: 100vw; min-height: 0;
+    transform-origin: top left;
+    transform: translateX(100vw) rotate(90deg);
+  }
+}

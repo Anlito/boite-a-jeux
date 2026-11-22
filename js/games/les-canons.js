@@ -68,7 +68,6 @@ function mount(root, ctx) {
 
   const overlay = h(`<div class="cn-overlay">
     <div class="cn-banner" hidden><span class="cn-banner-art"></span><span class="cn-banner-text"></span></div>
-    <div class="cn-rotate">${icon("rejouer")} Tourne l'écran</div>
   </div>`);
   root.append(overlay);
   const banner = overlay.querySelector(".cn-banner");
@@ -504,6 +503,7 @@ export default {
   title: "Les canons",
   players: { min: 1, max: 4 },
   robots: true,
+  orientation: "landscape",
   theme: { bg: "#D8F0C8", ink: "#2F6B2A" },
   vignette: () => `<svg viewBox="0 0 160 120" aria-hidden="true">
     <path d="M0 92 Q40 70 80 82 T160 76 V120 H0 Z" fill="#D9A066"/>

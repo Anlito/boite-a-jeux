@@ -29,6 +29,7 @@ export default {
   id, title,
   players: { min, max },   // de 1 à 4
   robots: true,            // des robots peuvent remplir les places
+  orientation: "landscape", // facultatif : paysage imposé (sinon l'orientation du moment, verrouillée)
   theme: { bg, ink },      // couleurs de sa vignette
   vignette: () => "<svg…>",
   rules: { text: session => "…", demo: session => ({ node, stop }) },

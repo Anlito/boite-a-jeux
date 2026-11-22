@@ -1,4 +1,5 @@
 // Moteur partagé des jeux dessinés : terrain aux proportions fixes, boucle de jeu, images.
+import { isTurned } from "./orientation.js";
 
 // Terrain de taille fixe (width × height), centré et mis à l'échelle sans jamais être déformé.
 export function createStage(root, { width, height, background = "#2B2350" }) {
@@ -9,8 +10,8 @@ export function createStage(root, { width, height, background = "#2B2350" }) {
   let scale = 1, ox = 0, oy = 0, dpr = 1, cw = 0, ch = 0;
 
   function fit() {
-    const box = root.getBoundingClientRect();
-    cw = box.width; ch = box.height;
+    // Taille avant tout quart de tour éventuel (voir orientation.js).
+    cw = root.clientWidth; ch = root.clientHeight;
     dpr = Math.min(2, window.devicePixelRatio || 1);
     canvas.width = Math.max(1, Math.round(cw * dpr));
     canvas.height = Math.max(1, Math.round(ch * dpr));
@@ -33,8 +34,17 @@ export function createStage(root, { width, height, background = "#2B2350" }) {
     },
     // Coordonnées d'un doigt dans le repère du terrain.
     toWorld(clientX, clientY) {
-      const box = canvas.getBoundingClientRect();
-      return { x: (clientX - box.left - ox) / scale, y: (clientY - box.top - oy) / scale };
+      let x, y;
+      if (isTurned()) {
+        // Jeu tourné d'un quart de tour vers la droite : le haut du jeu est sur le bord droit de l'écran.
+        x = clientY;
+        y = window.innerWidth - clientX;
+      } else {
+        const box = canvas.getBoundingClientRect();
+        x = clientX - box.left;
+        y = clientY - box.top;
+      }
+      return { x: (x - ox) / scale, y: (y - oy) / scale };
     },
     destroy() { observer.disconnect(); }
   };

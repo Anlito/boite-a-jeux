@@ -3,6 +3,7 @@ import { GAMES, gameById } from "./games/index.js";
 import { store } from "./core/store.js";
 import { play, say } from "./core/sound.js";
 import { h, on, modal, iconButton, describeSeat } from "./core/ui.js";
+import { enterGameOrientation } from "./core/orientation.js";
 import { SEATS, AVATARS, ROBOTS, avatarArt, robotArt, mascotArt, icon, starSVG, peopleSVG, shapeSVG } from "./core/art.js";
 
 const stars = (count, total = 3) => `<span class="stars">${Array.from({ length: total }, (_, i) => starSVG(i < count)).join("")}</span>`;
@@ -276,11 +277,16 @@ function playScreen(app, { session }) {
   let wakeLock = null;
   navigator.wakeLock?.request("screen").then(lock => { wakeLock = lock; }).catch(() => {});
 
+  let leaveOrientation = null;
   return {
     node,
-    ready: () => instance.start(),
+    ready() {
+      leaveOrientation = enterGameOrientation(game.orientation);
+      instance.start();
+    },
     leave() {
       instance.destroy();
+      leaveOrientation?.();
       document.removeEventListener("visibilitychange", onHidden);
       document.removeEventListener("keydown", onKey);
       wakeLock?.release().catch(() => {});
