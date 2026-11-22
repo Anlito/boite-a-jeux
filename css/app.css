@@ -596,3 +596,22 @@ h1, h2, h3, h4, p { margin: 0; }
 .level-free { font-weight: 700; font-size: 1.2rem; }
 .level-tile small { font-weight: 500; }
 .podium-actions .btn.wide.replay { min-height: 54px; }
+
+/* ---------- Astro-balles ---------- */
+.ab-demo { position: relative; width: 200px; height: 200px; border-radius: 26px; background: radial-gradient(#3B2F86, #1C1745); overflow: hidden; }
+.ab-paddle { position: absolute; left: 70px; width: 60px; height: 12px; border-radius: 6px; }
+.ab-paddle.top { top: 14px; background: #EB5757; animation: ab-top 2s ease-in-out infinite; }
+.ab-paddle.bottom { bottom: 14px; background: #2F80ED; animation: ab-bottom 2s ease-in-out infinite; }
+.ab-ball { position: absolute; left: 92px; top: 92px; width: 16px; height: 16px; border-radius: 50%; background: #D0F7FF; box-shadow: 0 0 12px #56CEFF; animation: ab-ball 2s linear infinite; }
+@keyframes ab-ball { 0% { transform: translate(-30px, 66px); } 50% { transform: translate(30px, -66px); } 100% { transform: translate(-30px, 66px); } }
+@keyframes ab-top { 0%, 100% { transform: translateX(-10px); } 50% { transform: translateX(30px); } }
+@keyframes ab-bottom { 0%, 100% { transform: translateX(-30px); } 50% { transform: translateX(10px); } }
+
+/* Top départ : images du lot 3 */
+.td-buzzer.pictured { background: none; box-shadow: none; }
+.td-buzzer.pictured img { width: 118%; max-width: none; filter: drop-shadow(0 8px 6px #0000002e); }
+.td-buzzer.pictured .down { display: none; }
+.td-zone.pressed .td-buzzer.pictured { transform: none; box-shadow: none; }
+.td-zone.pressed .td-buzzer.pictured .up { display: none; }
+.td-zone.pressed .td-buzzer.pictured .down { display: block; }
+.td.n1::before { background: url("../assets/top-depart/fond.jpg") center 70% / cover no-repeat, var(--ink); }

@@ -1,5 +1,8 @@
 // Top départ : attendre le bon signal, puis taper le premier.
-import { avatarArt, shapeSVG, icon } from "../core/art.js";
+import { avatarArt, shapeSVG, icon, hasImage, imagePath } from "../core/art.js";
+
+// Image du lot 3 si elle existe, sinon le dessin de secours.
+const pic = (name, fallback) => hasImage(`top-depart/${name}.png`) ? `<img src="${imagePath(`top-depart/${name}.png`)}" alt="" draggable="false">` : fallback();
 import { play, say } from "../core/sound.js";
 import { h } from "../core/ui.js";
 
@@ -38,18 +41,19 @@ function lightSVG(lit) {
 }
 
 const SIGNS = {
-  rouge: { art: () => lightSVG("rouge") },
-  orange: { art: () => lightSVG("orange") },
-  vert: { art: () => lightSVG("vert"), say: "le feu vert" },
-  chat: { art: () => avatarArt("chat"), say: "le chat" },
-  lapin: { art: () => avatarArt("lapin"), say: "le lapin" },
+  rouge: { art: () => pic("feu-rouge", () => lightSVG("rouge")) },
+  orange: { art: () => pic("feu-orange", () => lightSVG("orange")) },
+  vert: { art: () => pic("feu-vert", () => lightSVG("vert")), say: "le feu vert" },
+  chat: { art: () => pic("piege-chat", () => avatarArt("chat")), say: "le chat" },
+  lapin: { art: () => pic("piege-lapin", () => avatarArt("lapin")), say: "le lapin" },
+  fleur: { art: () => pic("piege-fleur", () => avatarArt("grenouille")) },
   renard: { art: () => avatarArt("renard") },
   ours: { art: () => avatarArt("ours") },
   grenouille: { art: () => avatarArt("grenouille") },
   hibou: { art: () => avatarArt("hibou") },
   panda: { art: () => avatarArt("panda") }
 };
-const ANIMALS = ["chat", "lapin", "renard", "ours", "grenouille", "hibou", "panda"];
+const ANIMALS = ["chat", "lapin", "fleur", "renard", "ours", "grenouille", "hibou", "panda"];
 
 const pickOne = list => list[Math.floor(Math.random() * list.length)];
 const between = (min, max) => min + Math.random() * (max - min);
@@ -97,7 +101,9 @@ function mount(root, ctx) {
         <div class="td-inner">
           <div class="td-head"><span class="td-avatar">${seat.art}</span><span class="td-name">${seat.label}</span>
             ${solo ? `<span class="td-round"></span>` : `<span class="td-pips">${"<i></i>".repeat(GOAL)}</span>`}</div>
-          <div class="td-buzzer">${shapeSVG(seat.shape, "#fff")}</div>
+          <div class="td-buzzer ${hasImage(`top-depart/buzzer-${seat.name.toLowerCase()}.png`) ? "pictured" : ""}">${hasImage(`top-depart/buzzer-${seat.name.toLowerCase()}.png`)
+            ? `<img class="up" src="${imagePath(`top-depart/buzzer-${seat.name.toLowerCase()}.png`)}" alt="" draggable="false"><img class="down" src="${imagePath(`top-depart/buzzer-${seat.name.toLowerCase()}-appuye.png`)}" alt="" draggable="false">`
+            : shapeSVG(seat.shape, "#fff")}</div>
           <div class="td-goal" aria-hidden="true"></div>
           <div class="td-msg" aria-live="polite"></div>
         </div>
