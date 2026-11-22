@@ -11,6 +11,8 @@ Application web installable, sans compte, sans publicité, qui fonctionne hors l
 | Sumo-bulles | 1 à 4, robots | Jouable |
 | Les canons | 1 à 4, robots, chacun son tour | Jouable |
 
+En solo, chaque jeu a 10 niveaux dessinés à la main (une étoile débloque le suivant) puis un défi libre, ouvert après le niveau 5.
+
 ## Organisation
 
 - `index.html`, `css/app.css` : la page et la charte graphique.
@@ -31,6 +33,7 @@ export default {
   players: { min, max },   // de 1 à 4
   robots: true,            // des robots peuvent remplir les places
   orientation: "landscape", // facultatif : paysage imposé (sinon l'orientation du moment, verrouillée)
+  levels: [{ goal, … }],    // facultatif : niveaux solo (ctx.level reçoit le niveau, null en défi libre)
   theme: { bg, ink },      // couleurs de sa vignette
   vignette: () => "<svg…>",
   rules: { text: session => "…", demo: session => ({ node, stop }) },

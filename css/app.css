@@ -575,3 +575,24 @@ h1, h2, h3, h4, p { margin: 0; }
 .doubles-text { flex: 1; font-weight: 600; color: var(--muted); }
 .btn.sell-doubles { min-height: 48px; padding: 6px 16px; font-size: 1.05rem; }
 .btn.sell-doubles img, .btn.sell-doubles svg { width: 24px; height: 24px; }
+
+/* ---------- Niveaux ---------- */
+
+.level-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(30%, 120px), 1fr)); gap: 14px; max-width: 760px; width: 100%; margin: 0 auto; }
+.level-tile {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  aspect-ratio: 1; border-radius: var(--radius); background: var(--card); box-shadow: 0 6px 0 var(--shadow);
+}
+.level-tile:active:not(.locked) { transform: translateY(4px); box-shadow: 0 2px 0 var(--shadow); }
+.level-num { font-size: clamp(2rem, 7vw, 2.8rem); font-weight: 700; line-height: 1; color: var(--accent); }
+.level-tile .stars svg { width: 22px; height: 22px; }
+.level-tile.next { box-shadow: 0 0 0 4px var(--accent), 0 6px 0 var(--shadow); animation: breathe-btn 1.4s ease-in-out infinite; }
+.level-tile.locked { background: #F1E8D6; box-shadow: none; color: #B5A584; }
+.level-tile.locked img, .level-tile.locked svg { width: 34px; height: 34px; opacity: .5; }
+.level-tile.locked .level-num { font-size: 1.2rem; color: #B5A584; }
+.level-tile.free { grid-column: span 2; aspect-ratio: auto; min-height: 110px; background: linear-gradient(135deg, #9B86FF, #7B61FF); color: #fff; box-shadow: 0 6px 0 var(--accent-deep); }
+.level-tile.free .level-num { color: #fff; }
+.level-tile.free.locked { background: #F1E8D6; color: #B5A584; box-shadow: none; }
+.level-free { font-weight: 700; font-size: 1.2rem; }
+.level-tile small { font-weight: 500; }
+.podium-actions .btn.wide.replay { min-height: 54px; }

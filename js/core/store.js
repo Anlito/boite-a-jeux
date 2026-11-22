@@ -64,6 +64,22 @@ export const store = {
     return { newRecord, ...current };
   },
 
+  /* Niveaux solo : meilleures étoiles par niveau */
+
+  levelStars(profileId, gameId) {
+    return data.results[profileId]?.[gameId]?.levels || {};
+  },
+
+  recordLevel(profileId, gameId, level, stars) {
+    const byGame = (data.results[profileId] ||= {});
+    const entry = (byGame[gameId] ||= { stars: 0, best: null, wins: 0, played: 0 });
+    entry.levels ||= {};
+    const before = entry.levels[level] || 0;
+    entry.levels[level] = Math.max(before, stars);
+    save();
+    return { before, improved: stars > before };
+  },
+
   /* Pièces et autocollants, par profil */
 
   coins(profileId) { return this.profile(profileId)?.coins || 0; },

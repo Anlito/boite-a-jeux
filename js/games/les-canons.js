@@ -9,7 +9,23 @@ const W = 1600, H = 900, STEP = 4, COLS = W / STEP + 1;
 const GRAVITY = 600, WIND = 95, CRATER = 54, BLAST = 72;
 const HP = 3;
 const S = 1.35;                 // taille des châteaux
-const SOLO_CRATES = 6, SOLO_BALLS = 10;
+const SOLO_CRATES = 6, SOLO_BALLS = 10, SOLO_SPARE = 2;   // défi libre
+
+// Niveaux solo, dessinés à la main : terrain fixe (p1, p2 = ondulations, hill = sommet de la colline),
+// caisses aux places choisies, boulets, boulets à garder pour 3 étoiles, vent
+// (un nombre fixe, "random" = change à chaque tir, "strong" = fort et changeant).
+const LEVELS = [
+  { p1: 1.2, p2: 3.0, hill: 1150, crates: [720, 980], balls: 5, spare: 2, wind: 0, goal: "Deux caisses toutes proches. Pose ton doigt, tire en arrière, puis lâche !" },
+  { p1: 2.5, p2: 0.5, hill: 1050, crates: [650, 1000, 1350], balls: 6, spare: 2, wind: 0, goal: "Trois caisses, de plus en plus loin. Tire plus fort pour les plus lointaines !" },
+  { p1: 4.0, p2: 2.2, hill: 720, crates: [1000, 1250, 1480], balls: 6, spare: 2, wind: 0, goal: "Une grande colline au milieu : tire haut pour passer par-dessus !" },
+  { p1: 0.3, p2: 5.1, hill: 1250, crates: [600, 880, 1150, 1450], balls: 6, spare: 1, wind: 0.25, goal: "Un petit vent pousse les boulets vers la droite. Regarde le drapeau !" },
+  { p1: 5.5, p2: 1.4, hill: 900, crates: [700, 950, 1250, 1500], balls: 6, spare: 1, wind: -0.5, goal: "Le vent souffle vers toi : tire plus fort !" },
+  { p1: 3.3, p2: 4.4, hill: 800, crates: [620, 840, 1060, 1300, 1520], balls: 7, spare: 2, wind: 0.5, goal: "Cinq caisses et un vent qui t'aide. Vise bien !" },
+  { p1: 1.8, p2: 2.9, hill: 1150, crates: [620, 840, 1060, 1300, 1520], balls: 7, spare: 1, wind: "random", goal: "Le vent change à chaque tir : regarde le drapeau avant de tirer !" },
+  { p1: 2.1, p2: 0.9, hill: 700, crates: [600, 800, 1000, 1200, 1400, 1550], balls: 8, spare: 2, wind: "random", goal: "Six caisses derrière une colline. Prends ton temps !" },
+  { p1: 4.6, p2: 3.7, hill: 650, crates: [900, 1050, 1200, 1350, 1480, 1560], balls: 8, spare: 1, wind: "random", goal: "Toutes les caisses sont loin. Tire fort et haut !" },
+  { p1: 0.8, p2: 5.9, hill: 750, crates: [560, 760, 980, 1180, 1380, 1550], balls: 7, spare: 1, wind: "strong", goal: "Le défi des champions : vent fort et peu de boulets !" }
+];
 const ROBOT = {
   1: { angle: 0.2, power: 0.14, think: 1.4 },
   2: { angle: 0.1, power: 0.07, think: 1.1 },
@@ -23,8 +39,9 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 /* ---------- Terrain ---------- */
 
-function makeTerrain(castles, solo) {
-  const p1 = Math.random() * 6, p2 = Math.random() * 6, hill = solo ? between(600, 900) : W / 2 + between(-150, 150);
+function makeTerrain(castles, solo, fixed = null) {
+  const p1 = fixed ? fixed.p1 : Math.random() * 6, p2 = fixed ? fixed.p2 : Math.random() * 6;
+  const hill = fixed ? fixed.hill : solo ? between(600, 900) : W / 2 + between(-150, 150);
   const ground = Array.from({ length: COLS }, (_, i) => {
     const x = i * STEP;
     const y = 650 - 70 * Math.sin(x / 270 + p1) - 40 * Math.sin(x / 115 + p2) - 170 * Math.exp(-(((x - hill) / 180) ** 2));
@@ -41,6 +58,7 @@ function makeTerrain(castles, solo) {
 
 function mount(root, ctx) {
   const solo = ctx.count === 1;
+  const level = ctx.level;
   const players = ctx.seats;
   const stage = createStage(root, { width: W, height: H, background: "#CDEBFF" });
   const g = stage.ctx;
@@ -48,7 +66,7 @@ function mount(root, ctx) {
 
   const xs = CASTLE_X[players.length];
   const castles = players.map((p, i) => ({ seat: i, p, x: xs[i], y: 0, hp: HP, hits: 0, angle: i < players.length / 2 || solo ? -0.8 : -Math.PI + 0.8, flash: 0, image: artImage(p.art), out: false }));
-  let ground = makeTerrain(xs, solo);
+  let ground = makeTerrain(xs, solo, level);
   const groundAt = x => {
     const f = clamp(x, 0, W) / STEP, i = Math.floor(f), k = f - i;
     return ground[i] * (1 - k) + (ground[Math.min(COLS - 1, i + 1)] ?? ground[i]) * k;
@@ -57,14 +75,17 @@ function mount(root, ctx) {
 
   // Défi solo : des caisses à toucher avec un nombre de boulets limité.
   const crates = [];
-  if (solo) {
+  if (level) level.crates.forEach(x => crates.push({ x, y: groundAt(x), hit: false }));
+  else if (solo) {
     while (crates.length < SOLO_CRATES) {
       const x = between(560, 1530);
       if (crates.some(c => Math.abs(c.x - x) < 120)) continue;
       crates.push({ x, y: groundAt(x), hit: false });
     }
   }
-  let balls = SOLO_BALLS;
+  let balls = level ? level.balls : SOLO_BALLS;
+  const spare = level ? level.spare : SOLO_SPARE;
+  const total = crates.length;
 
   const overlay = h(`<div class="cn-overlay">
     <div class="cn-banner" hidden><span class="cn-banner-art"></span><span class="cn-banner-text"></span></div>
@@ -86,7 +107,13 @@ function mount(root, ctx) {
       do { turn = (turn + 1) % castles.length; } while (castles[turn].out);
     }
     // Le vent se lève après le premier tour de table.
-    wind = shotsFired < (solo ? 2 : castles.length) ? 0 : Math.round(between(-1, 1) * 4) / 4;
+    if (level) {
+      wind = level.wind === "random" ? Math.round(between(-0.75, 0.75) * 4) / 4
+        : level.wind === "strong" ? (Math.random() < 0.5 ? -1 : 1) * Math.round(between(0.5, 1) * 4) / 4
+        : level.wind;
+    } else {
+      wind = shotsFired < (solo ? 2 : castles.length) ? 0 : Math.round(between(-1, 1) * 4) / 4;
+    }
     phase = "banner";
     timer = solo && shotsFired > 0 ? 0.01 : 1.4;
     robotPlan = null;
@@ -317,15 +344,15 @@ function mount(root, ctx) {
   function finishSolo() {
     phase = "done";
     const hit = crates.filter(c => c.hit).length;
-    const stars = hit === SOLO_CRATES ? (balls >= 2 ? 3 : 2) : hit >= 3 ? 1 : 0;
+    const stars = hit === total ? (balls >= spare ? 3 : 2) : hit >= Math.ceil(total / 2) ? 1 : 0;
     const value = hit * 100 + balls;
     ctx.finish({
       solo: {
         stars, value, lowerIsBetter: false,
         format: v => `${Math.floor(v / 100)} caisses, ${v % 100} boulet${v % 100 > 1 ? "s" : ""} en réserve`,
-        label: `${hit} caisse${hit > 1 ? "s" : ""} sur ${SOLO_CRATES}` + (hit === SOLO_CRATES ? ` · ${balls} boulet${balls > 1 ? "s" : ""} en réserve` : ""),
-        speech: hit === SOLO_CRATES ? "Toutes les caisses sont tombées !" : `Tu as touché ${hit} caisse${hit > 1 ? "s" : ""} !`,
-        next: stars === 3 ? "" : stars === 2 ? "3 étoiles : toutes les caisses avec 2 boulets en réserve" : stars === 1 ? "2 étoiles : toutes les caisses" : "1 étoile : toucher 3 caisses"
+        label: `${hit} caisse${hit > 1 ? "s" : ""} sur ${total}` + (hit === total ? ` · ${balls} boulet${balls > 1 ? "s" : ""} en réserve` : ""),
+        speech: hit === total ? "Toutes les caisses sont tombées !" : `Tu as touché ${hit} caisse${hit > 1 ? "s" : ""} !`,
+        next: stars === 3 ? "" : stars === 2 ? `3 étoiles : toutes les caisses avec ${spare} boulet${spare > 1 ? "s" : ""} en réserve` : stars === 1 ? "2 étoiles : toutes les caisses" : `1 étoile : toucher ${Math.ceil(total / 2)} caisses`
       }
     });
   }
@@ -403,7 +430,7 @@ function mount(root, ctx) {
       g.fillStyle = "#ffffffe0";
       g.beginPath(); g.roundRect(24, 22, 330, 70, 22); g.fill();
       text(g, `Boulets : ${balls}`, 44, 57, { size: 30, align: "left" });
-      text(g, `Caisses : ${crates.filter(k => k.hit).length}/${SOLO_CRATES}`, 210, 57, { size: 30, align: "left" });
+      text(g, `Caisses : ${crates.filter(k => k.hit).length}/${total}`, 210, 57, { size: 30, align: "left" });
     }
     if (message) text(g, message, W / 2, 330, { size: 66, color: "#fff", stroke: "#2B2350" });
   }
@@ -520,5 +547,6 @@ export default {
       : "Chacun son tour : pose ton doigt, tire en arrière comme un lance-pierre, puis lâche ! Trois touches et le château est battu. Attention au vent !",
     demo
   },
+  levels: LEVELS,
   mount
 };

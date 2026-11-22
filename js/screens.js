@@ -163,7 +163,7 @@ export function who(app, { game, count }) {
   goButton.addEventListener("click", () => {
     const session = { game, count, seats: seats.map(seat => ({ ...seat })) };
     store.rememberSetup(game.id, { count, seats: session.seats });
-    app.go("rules", { session });
+    app.go(count === 1 && game.levels ? "levels" : "rules", { session });
   });
   node.querySelector(".back").addEventListener("click", () => app.go("count", { game }));
   render();
@@ -200,11 +200,45 @@ function createProfile(done) {
   say("Choisis ton animal !");
 }
 
+/* ---------- Niveaux (solo) ---------- */
+
+// Le mode libre (le défi sans fin) s'ouvre quand le niveau FREE_AFTER a au moins une étoile.
+const FREE_AFTER = 5;
+
+export function levels(app, { session }) {
+  const { game } = session;
+  const profileId = session.seats[0].profileId;
+  const done = store.levelStars(profileId, game.id);
+  const unlocked = i => i === 0 || (done[i - 1] || 0) >= 1;
+  const freeOpen = (done[FREE_AFTER - 1] || 0) >= 1;
+  const next = game.levels.findIndex((_, i) => unlocked(i) && !done[i]);
+  const node = h(`<main class="screen levels">${topBar(game.title, "Retour au choix des joueurs")}
+    <p class="ask">Choisis ton niveau</p>
+    <section class="level-grid">${game.levels.map((level, i) => unlocked(i) ? `
+      <button class="level-tile ${i === next ? "next" : ""}" data-level="${i}" aria-label="Niveau ${i + 1}">
+        <span class="level-num">${i + 1}</span>${stars(done[i] || 0)}
+      </button>` : `
+      <span class="level-tile locked" aria-label="Niveau ${i + 1} fermé">${iconArt("cadenas")}<span class="level-num">${i + 1}</span></span>`).join("")}
+      ${freeOpen ? `<button class="level-tile free" data-level="libre"><span class="level-num">∞</span><span class="level-free">Défi libre</span></button>`
+        : `<span class="level-tile free locked">${iconArt("cadenas")}<span class="level-free">Défi libre</span><small>Niveau ${FREE_AFTER} pour l'ouvrir</small></span>`}
+    </section>
+  </main>`);
+  node.querySelector(".back").addEventListener("click", () => app.go("who", { game, count: 1 }));
+  on(node, "[data-level]", "click", (_, tile) => {
+    const level = tile.dataset.level === "libre" ? "libre" : Number(tile.dataset.level);
+    app.go("rules", { session: { ...session, level } });
+  });
+  return { node, ready: () => say("Choisis ton niveau !") };
+}
+
+const levelOf = session => typeof session.level === "number" ? session.game.levels[session.level] : null;
+
 /* ---------- Règles ---------- */
 
 export function rules(app, { session }) {
   const { game } = session;
-  const text = game.rules.text(session);
+  const level = levelOf(session);
+  const text = level ? `Niveau ${session.level + 1}. ${level.goal}` : game.rules.text(session);
   const node = h(`<main class="screen rules">${topBar(game.title, "Retour au choix des joueurs")}
     <section class="rules-stage">
       <div class="rules-demo"></div>
@@ -214,7 +248,7 @@ export function rules(app, { session }) {
   </main>`);
   const demo = game.rules.demo(session);
   node.querySelector(".rules-demo").append(demo.node);
-  node.querySelector(".back").addEventListener("click", () => app.go("who", { game, count: session.count }));
+  node.querySelector(".back").addEventListener("click", () => session.level !== undefined ? app.go("levels", { session }) : app.go("who", { game, count: session.count }));
   node.querySelector(".go-btn").addEventListener("click", () => app.go("play", { session }));
   node.querySelector(".bubble").addEventListener("click", () => say(text));
   return { node, ready: () => say(text), leave: () => demo.stop?.() };
@@ -238,6 +272,7 @@ function playScreen(app, { session }) {
   const instance = game.mount(node.querySelector(".play-root"), {
     seats,
     count: session.count,
+    level: levelOf(session),
     finish(result) {
       if (finished) return;
       finished = true;
@@ -307,21 +342,28 @@ export function podium(app, { session, result }) {
   const { game } = session;
   const seats = session.seats.map((seat, i) => ({ ...describeSeat(seat, i), index: i }));
   const solo = session.count === 1;
-  let headline, body, mood = "bravo", packReady = false;
+  let headline, body, mood = "bravo", packReady = false, nextLevel = null;
 
   if (solo) {
     const player = seats[0];
-    const saved = store.record(player.profile.id, game.id, { stars: result.solo.stars, value: result.solo.value, lowerIsBetter: result.solo.lowerIsBetter });
+    // En niveau : on garde les étoiles du niveau ; le record (temps, score) ne vaut que pour le défi libre.
+    const inLevel = typeof session.level === "number";
+    const saved = store.record(player.profile.id, game.id, inLevel
+      ? { stars: result.solo.stars }
+      : { stars: result.solo.stars, value: result.solo.value, lowerIsBetter: result.solo.lowerIsBetter });
+    if (inLevel) store.recordLevel(player.profile.id, game.id, session.level, result.solo.stars);
     const earned = Math.max(1, result.solo.stars) + (saved.newRecord ? 1 : 0);
     store.addCoins(player.profile.id, earned);
     if (store.coins(player.profile.id) >= PACK_PRICE) packReady = true;
     headline = result.solo.stars >= 3 ? "Incroyable !" : result.solo.stars === 2 ? "Super !" : result.solo.stars === 1 ? "Bien joué !" : "Essaie encore !";
+    if (inLevel && result.solo.stars) headline = `Niveau ${session.level + 1} réussi !`;
+    if (inLevel && result.solo.stars && session.level + 1 < game.levels.length) nextLevel = session.level + 1;
     if (!result.solo.stars) mood = "triste";
     body = `<div class="solo-result" style="--seat:${player.color};--seat-soft:${player.soft}">
       <span class="solo-art">${player.art}</span>
       <div class="big-stars">${stars(result.solo.stars)}</div>
       <p class="solo-value">${result.solo.label}</p>
-      ${saved.newRecord ? `<p class="record">${icon("trophee")} Nouveau record !</p>` : saved.best !== null ? `<p class="best">Record : ${result.solo.format(saved.best)}</p>` : ""}
+      ${inLevel ? "" : saved.newRecord ? `<p class="record">${icon("trophee")} Nouveau record !</p>` : saved.best !== null ? `<p class="best">Record : ${result.solo.format(saved.best)}</p>` : ""}
       ${result.solo.next ? `<p class="next-goal">${result.solo.next}</p>` : ""}
       ${coinsLine(earned)}
     </div>`;
@@ -363,16 +405,23 @@ export function podium(app, { session, result }) {
     <header class="podium-top"><span class="podium-mascot">${mascotArt(mood)}</span><h2>${headline}</h2></header>
     ${body}
     <div class="podium-actions">
-      <button class="btn primary huge replay">${icon("rejouer")} Rejouer</button>
+      ${nextLevel !== null
+        ? `<button class="btn primary huge next-level">${icon("lecture")} Niveau ${nextLevel + 1}</button>
+           <button class="btn wide replay">${icon("rejouer")} Rejouer le niveau ${session.level + 1}</button>`
+        : `<button class="btn primary huge replay">${icon("rejouer")} Rejouer</button>`}
       ${packReady ? `<button class="btn pack-ready">${iconArt("piece")} Une pochette t'attend !</button>` : ""}
       <div class="row">
-        <button class="btn players">${icon("personnes")} Joueurs</button>
+        ${session.level !== undefined
+          ? `<button class="btn to-levels">${iconArt("etoile-pleine")} Niveaux</button>`
+          : `<button class="btn players">${icon("personnes")} Joueurs</button>`}
         <button class="btn home-btn">${icon("accueil")} Autre jeu</button>
       </div>
     </div>
   </main>`);
   node.querySelector(".replay").addEventListener("click", () => app.go("play", { session }));
-  node.querySelector(".players").addEventListener("click", () => app.go("who", { game, count: session.count }));
+  node.querySelector(".players")?.addEventListener("click", () => app.go("who", { game, count: session.count }));
+  node.querySelector(".to-levels")?.addEventListener("click", () => app.go("levels", { session }));
+  node.querySelector(".next-level")?.addEventListener("click", () => app.go("rules", { session: { ...session, level: nextLevel } }));
   node.querySelector(".home-btn").addEventListener("click", () => app.go("home"));
   node.querySelector(".pack-ready")?.addEventListener("click", () => app.go("album", { profileId: seats.find(s => s.kind === "human" && store.coins(s.profile.id) >= PACK_PRICE)?.profile.id }));
   return { node, ready: () => play(solo && !result.solo.stars ? "pop" : "win") };

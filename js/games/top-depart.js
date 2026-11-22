@@ -4,7 +4,22 @@ import { play, say } from "../core/sound.js";
 import { h } from "../core/ui.js";
 
 const GOAL = 5;            // points pour gagner à plusieurs
-const SOLO_ROUNDS = 8;     // manches du défi solo
+const SOLO_ROUNDS = 8;     // manches du défi libre
+
+// Niveaux solo : base et span règlent la difficulté (0 = calme, 0,25 = pièges, 0,6 = la cible change),
+// two et three les temps moyens à battre pour 2 et 3 étoiles.
+const LEVELS = [
+  { rounds: 5, base: 0, span: 0.2, two: 700, three: 560, goal: "Attends le feu vert et tape vite ! Moins de 560 millisecondes pour 3 étoiles." },
+  { rounds: 6, base: 0, span: 0.45, two: 680, three: 540, goal: "Attention, un feu orange peut arriver. Ne tape pas trop tôt !" },
+  { rounds: 6, base: 0.2, span: 0.4, two: 660, three: 520, goal: "Des pièges dès le début. Garde ton calme !" },
+  { rounds: 7, base: 0.3, span: 0.4, two: 640, three: 500, goal: "Des animaux essaient de te tromper. Tape seulement sur le feu vert !" },
+  { rounds: 7, base: 0.45, span: 0.3, two: 620, three: 480, goal: "Bientôt, la cible change : écoute bien ce qu'il faut toucher !" },
+  { rounds: 8, base: 0.5, span: 0.4, two: 600, three: 460, goal: "Feu vert, chat ou lapin : la cible change souvent !" },
+  { rounds: 8, base: 0.6, span: 0.4, two: 580, three: 440, goal: "Plus de pièges, plus de vitesse. Concentre-toi !" },
+  { rounds: 8, base: 0.7, span: 0.3, two: 560, three: 420, goal: "Les pièges arrivent par deux. Ne te laisse pas avoir !" },
+  { rounds: 8, base: 0.8, span: 0.2, two: 540, three: 400, goal: "Presque le niveau des champions !" },
+  { rounds: 8, base: 0.9, span: 0.1, two: 520, three: 380, goal: "Le niveau des champions : moins de 380 millisecondes pour 3 étoiles !" }
+];
 const BOOST_MS = [0, 100, 200];
 const ROBOT = {
   1: { min: 560, spread: 280, fooled: 0.3 },
@@ -40,8 +55,8 @@ const pickOne = list => list[Math.floor(Math.random() * list.length)];
 const between = (min, max) => min + Math.random() * (max - min);
 
 // Ce que réserve une manche : la cible, les pièges, le moment du départ.
-function planRound(round, solo) {
-  const stage = solo ? round / SOLO_ROUNDS : Math.min(1, round / 9);
+function planRound(round, solo, level) {
+  const stage = level ? Math.min(1, level.base + round / level.rounds * level.span) : solo ? round / SOLO_ROUNDS : Math.min(1, round / 9);
   let target = "vert";
   if (stage >= 0.6 && Math.random() < 0.6) target = pickOne(["chat", "lapin"]);
   const trapCount = stage < 0.25 ? 0 : stage < 0.5 ? (Math.random() < 0.6 ? 1 : 0) : 1 + Math.floor(Math.random() * (stage > 0.8 ? 3 : 2));
@@ -68,8 +83,10 @@ function speedWord(ms) {
 /* ---------- Le jeu ---------- */
 
 function mount(root, ctx) {
-  const { seats, count } = ctx;
+  const { seats, count, level } = ctx;
   const solo = count === 1;
+  const totalRounds = level ? level.rounds : SOLO_ROUNDS;
+  const goals = level ? { two: level.two, three: level.three } : { two: 560, three: 430 };
   const scores = seats.map(() => 0);
   const times = [];
   let errors = 0;
@@ -127,7 +144,7 @@ function mount(root, ctx) {
   }
   function renderScores() {
     zones.forEach((zone, i) => {
-      if (solo) zone.querySelector(".td-round").textContent = `${Math.min(round + 1, SOLO_ROUNDS)} / ${SOLO_ROUNDS}`;
+      if (solo) zone.querySelector(".td-round").textContent = `${Math.min(round + 1, totalRounds)} / ${totalRounds}`;
       else zone.querySelectorAll(".td-pips i").forEach((pip, k) => pip.classList.toggle("on", k < scores[i]));
     });
   }
@@ -135,8 +152,8 @@ function mount(root, ctx) {
   function nextRound() {
     round++;
     events = []; // oublie les signaux encore prévus pour la manche précédente
-    if (solo && round >= SOLO_ROUNDS) return endSolo();
-    plan = planRound(round, solo);
+    if (solo && round >= totalRounds) return endSolo();
+    plan = planRound(round, solo, level);
     out = new Set();
     taps = new Map();
     clearZones();
@@ -258,8 +275,8 @@ function mount(root, ctx) {
     const average = times.length ? times.reduce((a, b) => a + b, 0) / times.length : null;
     let starsWon = 0;
     if (average !== null) starsWon = 1;
-    if (average !== null && average < 560 && errors <= 2) starsWon = 2;
-    if (average !== null && average < 430 && errors <= 1) starsWon = 3;
+    if (average !== null && average < goals.two && errors <= 2) starsWon = 2;
+    if (average !== null && average < goals.three && errors <= 1) starsWon = 3;
     const fault = errors ? ` · ${errors} raté${errors > 1 ? "s" : ""}` : "";
     ctx.finish({
       solo: {
@@ -269,7 +286,7 @@ function mount(root, ctx) {
         format: v => `${Math.round(v)} ms`,
         label: average === null ? "Aucun bon départ cette fois." : `Rapide comme ${speedWord(average)} : ${Math.round(average)} ms${fault}`,
         speech: average === null ? "" : `Tu es rapide comme ${speedWord(average)} !`,
-        next: starsWon === 3 ? "" : starsWon === 2 ? "3 étoiles : moins de 430 ms, 1 raté au plus" : "2 étoiles : moins de 560 ms, 2 ratés au plus"
+        next: starsWon === 3 ? "" : starsWon === 2 ? `3 étoiles : moins de ${goals.three} ms, 1 raté au plus` : `2 étoiles : moins de ${goals.two} ms, 2 ratés au plus`
       }
     });
   }
@@ -361,5 +378,6 @@ export default {
       : `Attends le feu vert, puis tape dans ta zone avant les autres. Trop tôt ? Tu perds la manche ! Le premier à ${GOAL} points gagne.`,
     demo
   },
+  levels: LEVELS,
   mount
 };

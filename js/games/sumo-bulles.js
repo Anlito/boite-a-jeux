@@ -9,7 +9,22 @@ const W = 1000, CX = 500, CY = 500;
 const BUBBLE = 52;
 const GOAL = 3;                 // manches gagnées pour remporter le match
 const SOLO_ROUNDS = 5;
-const SOLO_ROBOTS = [1, 1, 2, 2, 3];
+const SOLO_ROBOTS = [1, 1, 2, 2, 3];   // défi libre : force des robots à chaque manche
+
+// Niveaux solo : les robots (leur force), le nombre de manches, les manches gagnées pour 1, 2, 3 étoiles,
+// les trous (à partir de la 2e manche) et la taille de la banquise.
+const LEVELS = [
+  { robots: [1], rounds: 3, stars: [1, 2, 3], holes: false, floe: 400, goal: "Un robot facile. Pousse-le dans l'eau !" },
+  { robots: [1, 1], rounds: 3, stars: [1, 2, 3], holes: false, floe: 400, goal: "Deux robots faciles. Reste au milieu de la banquise !" },
+  { robots: [2], rounds: 3, stars: [1, 2, 3], holes: false, floe: 400, goal: "Un robot plus malin. Attends le bon moment pour foncer !" },
+  { robots: [1, 2], rounds: 3, stars: [1, 2, 3], holes: true, floe: 400, goal: "Des trous apparaissent dans la glace. Ne tombe pas dedans !" },
+  { robots: [2, 2], rounds: 4, stars: [1, 2, 3], holes: true, floe: 400, goal: "Deux robots moyens et des trous. Laisse-les se pousser entre eux !" },
+  { robots: [1, 1, 2], rounds: 4, stars: [1, 2, 3], holes: false, floe: 400, goal: "Trois robots sur la banquise ! Le dernier debout gagne." },
+  { robots: [2, 3], rounds: 4, stars: [1, 2, 3], holes: true, floe: 400, goal: "Voici le robot fort. Méfie-toi de ses attaques !" },
+  { robots: [3], rounds: 4, stars: [1, 2, 3], holes: true, floe: 330, goal: "Seul contre le robot fort, sur une petite banquise !" },
+  { robots: [2, 2, 3], rounds: 5, stars: [1, 3, 4], holes: true, floe: 400, goal: "Trois robots, dont un fort. Courage !" },
+  { robots: [3, 3, 3], rounds: 5, stars: [1, 3, 4], holes: true, floe: 360, goal: "Le défi des champions : trois robots forts !" }
+];
 const SPIN = 2.0;               // vitesse de rotation de la flèche (radians par seconde)
 const FULL_CHARGE = 0.85;       // secondes pour une charge complète
 const FRICTION = 1.9;           // freinage sur la glace
@@ -33,9 +48,12 @@ const angleGap = (a, b) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
 
 function mount(root, ctx) {
   const solo = ctx.count === 1;
-  // En solo, deux robots rejoignent la banquise ; leur force augmente à chaque manche.
+  const level = ctx.level;
+  const soloRounds = level ? level.rounds : SOLO_ROUNDS;
+  const thresholds = level ? level.stars : [1, 3, 4];
+  // En solo, des robots rejoignent la banquise : ceux du niveau, ou deux robots de plus en plus forts (défi libre).
   const players = solo
-    ? [ctx.seats[0], ...[1, 2].map(i => ({ ...SEATS[i], kind: "robot", level: 1, label: "Robot", art: robotArt(1), boost: 0, index: i }))]
+    ? [ctx.seats[0], ...(level ? level.robots : [1, 1]).map((force, k) => ({ ...SEATS[k + 1], kind: "robot", level: force, label: "Robot", art: robotArt(force), boost: 0, index: k + 1 }))]
     : ctx.seats;
   const wins = players.map(() => 0);
   let soloWins = 0;
@@ -65,16 +83,16 @@ function mount(root, ctx) {
     phase = "countdown";
     timer = 3.2;
     roundTime = 0;
-    floe = 400;
+    floe = level?.floe || 400;
     holes = [];
     holeTimer = 5;
     message = null;
     const n = players.length;
     bubbles = players.map((p, i) => {
       const a = START_ANGLE[n][i];
-      const level = solo && p.kind === "robot" ? SOLO_ROBOTS[Math.min(round, SOLO_ROUNDS - 1)] : p.level;
+      const force = solo && p.kind === "robot" && !level ? SOLO_ROBOTS[Math.min(round, SOLO_ROUNDS - 1)] : p.level;
       return {
-        seat: i, p, level,
+        seat: i, p, level: force,
         x: CX + Math.cos(a) * 240, y: CY + Math.sin(a) * 240,
         vx: 0, vy: 0,
         angle: a + Math.PI,                       // la flèche commence tournée vers le centre
@@ -82,7 +100,7 @@ function mount(root, ctx) {
         charging: false, charge: 0, cooldown: 0,
         alive: true, fall: 0,
         mass: 1 + (p.boost || 0) * 0.3,
-        image: artImage(p.kind === "robot" ? robotArt(level) : p.art),
+        image: artImage(p.kind === "robot" ? robotArt(force) : p.art),
         ai: { wait: between(0.3, 1), hold: 0 }
       };
     });
@@ -95,7 +113,7 @@ function mount(root, ctx) {
     players.forEach((p, i) => {
       const pad = padOf(i);
       if (!pad) return;
-      if (solo) pad.querySelector(".pad-round").textContent = `${Math.min(round + 1, SOLO_ROUNDS)} / ${SOLO_ROUNDS}`;
+      if (solo) pad.querySelector(".pad-round").textContent = `${Math.min(round + 1, soloRounds)} / ${soloRounds}`;
       else pad.querySelectorAll(".pad-pips i").forEach((pip, k) => pip.classList.toggle("on", k < wins[i]));
     });
   }
@@ -220,7 +238,7 @@ function mount(root, ctx) {
     // La banquise rétrécit, de plus en plus vite si la manche s'éternise.
     const smallest = roundTime > 35 ? 120 : floeMin;
     if (roundTime > 5) floe = Math.max(smallest, floe - (roundTime > 30 ? 22 : 9 + round * 2) * dt);
-    if (round >= 1) {
+    if (round >= 1 && (!level || level.holes)) {
       holeTimer -= dt;
       if (holeTimer <= 0) { spawnHole(); holeTimer = Math.max(3.5, 7 - round); }
     }
@@ -304,7 +322,7 @@ function mount(root, ctx) {
       if (won) soloWins++;
       message = won ? "Gagné !" : "Plouf !";
       play(won ? "point" : "trap");
-      if (round + 1 >= SOLO_ROUNDS) return finishSolo();
+      if (round + 1 >= soloRounds) return finishSolo();
       return;
     }
     if (!winner) { message = "Égalité !"; return; }
@@ -320,14 +338,14 @@ function mount(root, ctx) {
 
   function finishSolo() {
     phase = "done";
-    const stars = soloWins >= 4 ? 3 : soloWins >= 3 ? 2 : soloWins >= 1 ? 1 : 0;
+    const stars = thresholds.filter(need => soloWins >= need).length;
     ctx.finish({
       solo: {
         stars, value: soloWins, lowerIsBetter: false,
         format: v => `${v} manche${v > 1 ? "s" : ""} gagnée${v > 1 ? "s" : ""}`,
-        label: `${soloWins} manche${soloWins > 1 ? "s" : ""} gagnée${soloWins > 1 ? "s" : ""} sur ${SOLO_ROUNDS}`,
+        label: `${soloWins} manche${soloWins > 1 ? "s" : ""} gagnée${soloWins > 1 ? "s" : ""} sur ${soloRounds}`,
         speech: soloWins ? `Tu as gagné ${soloWins} manche${soloWins > 1 ? "s" : ""} !` : "Les robots étaient coriaces !",
-        next: stars === 3 ? "" : stars === 2 ? "3 étoiles : gagner 4 manches" : stars === 1 ? "2 étoiles : gagner 3 manches" : "1 étoile : gagner une manche"
+        next: stars === 3 ? "" : `${stars + 1} étoile${stars ? "s" : ""} : gagner ${thresholds[stars]} manche${thresholds[stars] > 1 ? "s" : ""}`
       }
     });
   }
@@ -499,5 +517,6 @@ export default {
       : `La flèche tourne toute seule. Garde le doigt appuyé dans ta zone pour charger, lâche pour foncer ! Le dernier sur la banquise gagne la manche. ${GOAL} manches pour gagner !`,
     demo
   },
+  levels: LEVELS,
   mount
 };
