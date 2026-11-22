@@ -4,6 +4,11 @@ import { store } from "./core/store.js";
 import { play, say } from "./core/sound.js";
 import { h, on, modal, iconButton, describeSeat } from "./core/ui.js";
 import { enterGameOrientation } from "./core/orientation.js";
+import { PACK_PRICE } from "./core/stickers.js";
+export { album } from "./album.js";
+
+// Pièces gagnées : au moins une par partie, une par étoile, et un bonus pour un record ou une victoire.
+const coinsLine = (amount, extra = "") => `<span class="coins-won">+${amount} ${iconArt("piece")}${extra}</span>`;
 import { SEATS, AVATARS, ROBOTS, avatarArt, robotArt, mascotArt, icon, iconArt, starSVG, peopleArt, shapeSVG } from "./core/art.js";
 
 const stars = (count, total = 3) => `<span class="stars">${Array.from({ length: total }, (_, i) => starSVG(i < count)).join("")}</span>`;
@@ -28,6 +33,7 @@ export function home(app) {
     <header class="home-top">
       <span class="home-mascot">${mascotArt("salut")}</span>
       <h1>La boîte <span>à jeux</span></h1>
+      <button class="album-btn ${store.profiles.some(p => (p.coins || 0) >= PACK_PRICE) ? "ready" : ""}" aria-label="Mon album d'autocollants">${iconArt("etoile-pleine")}<span>Album</span></button>
       ${iconButton("reglages", "Réglages", "settings")}
     </header>
     <section class="shelf">${cards}
@@ -39,6 +45,7 @@ export function home(app) {
   </main>`);
   on(node, "[data-game]", "click", (_, card) => app.go("count", { game: gameById(card.dataset.game) }));
   node.querySelector(".settings").addEventListener("click", () => openSettings());
+  node.querySelector(".album-btn").addEventListener("click", () => app.go("album"));
   return { node };
 }
 
@@ -300,11 +307,14 @@ export function podium(app, { session, result }) {
   const { game } = session;
   const seats = session.seats.map((seat, i) => ({ ...describeSeat(seat, i), index: i }));
   const solo = session.count === 1;
-  let headline, body, mood = "bravo";
+  let headline, body, mood = "bravo", packReady = false;
 
   if (solo) {
     const player = seats[0];
     const saved = store.record(player.profile.id, game.id, { stars: result.solo.stars, value: result.solo.value, lowerIsBetter: result.solo.lowerIsBetter });
+    const earned = Math.max(1, result.solo.stars) + (saved.newRecord ? 1 : 0);
+    store.addCoins(player.profile.id, earned);
+    if (store.coins(player.profile.id) >= PACK_PRICE) packReady = true;
     headline = result.solo.stars >= 3 ? "Incroyable !" : result.solo.stars === 2 ? "Super !" : result.solo.stars === 1 ? "Bien joué !" : "Essaie encore !";
     if (!result.solo.stars) mood = "triste";
     body = `<div class="solo-result" style="--seat:${player.color};--seat-soft:${player.soft}">
@@ -313,15 +323,22 @@ export function podium(app, { session, result }) {
       <p class="solo-value">${result.solo.label}</p>
       ${saved.newRecord ? `<p class="record">${icon("trophee")} Nouveau record !</p>` : saved.best !== null ? `<p class="best">Record : ${result.solo.format(saved.best)}</p>` : ""}
       ${result.solo.next ? `<p class="next-goal">${result.solo.next}</p>` : ""}
+      ${coinsLine(earned)}
     </div>`;
     say(headline + " " + result.solo.speech);
   } else {
     const ranking = [...result.ranking].sort((a, b) => b.score - a.score);
     const top = ranking[0].score;
     const winners = ranking.filter(r => r.score === top);
+    const earnedBy = {};
     ranking.forEach(r => {
       const seat = seats[r.seat];
-      if (seat.kind === "human") store.record(seat.profile.id, game.id, { win: winners.length === 1 && winners[0] === r });
+      if (seat.kind !== "human") return;
+      const win = winners.length === 1 && winners[0] === r;
+      store.record(seat.profile.id, game.id, { win });
+      earnedBy[r.seat] = win ? 3 : 1;
+      store.addCoins(seat.profile.id, earnedBy[r.seat]);
+      if (store.coins(seat.profile.id) >= PACK_PRICE) packReady = true;
     });
     // Place sur le podium : les égalités partagent la marche.
     let place = 0, previous = null;
@@ -334,6 +351,7 @@ export function podium(app, { session, result }) {
       return `<div class="step place-${Math.min(r.place, 4)}" style="--seat:${seat.color};--seat-deep:${seat.deep};--seat-soft:${seat.soft}">
         <span class="step-art">${seat.art}</span>
         <span class="step-name">${seat.label}</span>
+        ${earnedBy[r.seat] ? coinsLine(earnedBy[r.seat]) : ""}
         <span class="step-block"><b>${r.place}</b><small>${r.label ?? `${r.score} pt${r.score > 1 ? "s" : ""}`}</small></span>
       </div>`;
     }).join("")}</div>`;
@@ -346,6 +364,7 @@ export function podium(app, { session, result }) {
     ${body}
     <div class="podium-actions">
       <button class="btn primary huge replay">${icon("rejouer")} Rejouer</button>
+      ${packReady ? `<button class="btn pack-ready">${iconArt("piece")} Une pochette t'attend !</button>` : ""}
       <div class="row">
         <button class="btn players">${icon("personnes")} Joueurs</button>
         <button class="btn home-btn">${icon("accueil")} Autre jeu</button>
@@ -355,5 +374,6 @@ export function podium(app, { session, result }) {
   node.querySelector(".replay").addEventListener("click", () => app.go("play", { session }));
   node.querySelector(".players").addEventListener("click", () => app.go("who", { game, count: session.count }));
   node.querySelector(".home-btn").addEventListener("click", () => app.go("home"));
+  node.querySelector(".pack-ready")?.addEventListener("click", () => app.go("album", { profileId: seats.find(s => s.kind === "human" && store.coins(s.profile.id) >= PACK_PRICE)?.profile.id }));
   return { node, ready: () => play(solo && !result.solo.stars ? "pop" : "win") };
 }

@@ -475,3 +475,94 @@ h1, h2, h3, h4, p { margin: 0; }
     linear-gradient(#FFF6E8e6, #FFF6E8cc 45%, #FFF6E8f2),
     url("../assets/commun/fonds/accueil.jpg") center bottom / cover no-repeat fixed;
 }
+
+/* ---------- Pièces, album, autocollants ---------- */
+
+.coins-won { display: inline-flex; align-items: center; gap: 6px; padding: 4px 14px; border-radius: 99px; background: #FFF1C2; color: #8A5A00; font-weight: 700; font-size: 1.3rem; animation: pop .4s .6s cubic-bezier(.3, 1.6, .5, 1) backwards; }
+.coins-won img, .coins-won svg { width: 30px; height: 30px; }
+.btn.pack-ready { width: 100%; background: #FFF1C2; color: #8A5A00; box-shadow: 0 5px 0 #E8C66A; animation: breathe-btn 1.2s ease-in-out infinite; }
+.btn.pack-ready img { width: 28px; height: 28px; }
+@keyframes breathe-btn { 50% { transform: scale(1.03); } }
+
+.album-btn {
+  position: relative; display: flex; align-items: center; gap: 6px; height: 56px; padding: 0 16px 0 10px;
+  border-radius: 99px; background: var(--card); box-shadow: 0 4px 0 var(--shadow); font-weight: 700; font-size: 1.1rem; color: var(--accent);
+}
+.album-btn img, .album-btn svg { width: 34px; height: 34px; }
+.album-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--shadow); }
+.album-btn.ready::after, .album-person .dot { content: ""; position: absolute; top: 4px; right: 6px; width: 14px; height: 14px; border-radius: 50%; background: #EB5757; box-shadow: 0 0 0 3px #fff; animation: dot 1.4s infinite; }
+@media (max-width: 420px) { .album-btn span { display: none; } .album-btn { padding: 0 11px; } }
+
+.album-body { display: flex; flex-direction: column; gap: 18px; }
+.album-empty { display: flex; align-items: flex-end; gap: 12px; margin: 40px auto; max-width: 560px; }
+.album-empty-mascot { width: 110px; flex: none; }
+.album-people { display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 8px; }
+.album-person { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 84px; padding: 8px; border-radius: 20px; background: var(--card); box-shadow: 0 4px 0 var(--shadow); font-weight: 600; }
+.album-person.current { box-shadow: 0 0 0 4px var(--accent), 0 4px 0 var(--shadow); }
+.album-person-art { width: 56px; aspect-ratio: 1; border-radius: 50%; background: var(--bg); display: grid; place-items: center; overflow: hidden; }
+.album-person-art img, .album-person-art svg { width: 96%; }
+.album-top { display: grid; grid-template-columns: auto 1fr; gap: 12px 16px; align-items: center; padding: 16px; border-radius: var(--radius); background: var(--card); box-shadow: 0 5px 0 var(--shadow); }
+.album-coins { display: flex; align-items: center; gap: 6px; font-size: 1.8rem; color: #8A5A00; }
+.album-coins img, .album-coins svg { width: 44px; height: 44px; }
+.album-progress { display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--muted); }
+.album-bar { flex: 1; height: 16px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.album-bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #7B61FF, #FF9AA8, #FFC83D); }
+.open-pack { grid-column: 1 / -1; min-height: 72px; font-size: 1.35rem; }
+.open-pack .price { display: inline-flex; align-items: center; gap: 2px; margin-left: 6px; padding: 2px 10px; border-radius: 99px; background: #ffffff33; }
+.open-pack .price img, .open-pack .price svg { width: 22px; height: 22px; }
+.mini-pack { width: 26px; height: 32px; border-radius: 6px; background: linear-gradient(135deg, #FFC83D, #FF9AA8); box-shadow: inset 0 -6px 0 #ffffff55; }
+.album-hint { grid-column: 1 / -1; text-align: center; color: var(--muted); font-weight: 500; }
+.album-family h3 { font-size: 1.3rem; margin: 0 0 10px 4px; }
+.sticker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(30%, 104px), 1fr)); gap: 12px; }
+
+.sticker {
+  position: relative; display: grid; place-items: center; aspect-ratio: 1; padding: 8%;
+  border-radius: 24px; background: #fff; box-shadow: 0 4px 0 var(--shadow);
+  border: 5px solid #fff; overflow: hidden;
+}
+.sticker-art { width: 100%; height: 100%; display: grid; place-items: center; }
+.sticker-art img, .sticker-art svg { width: 100%; height: 100%; object-fit: contain; }
+.sticker.rare { border-color: transparent; background: linear-gradient(#fff, #fff) padding-box, conic-gradient(#FF9AA8, #FFC83D, #8BE38B, #7FD0F2, #B9A6F2, #FF9AA8) border-box; }
+.sticker.rare:not(.missing) {
+  background:
+    radial-gradient(circle at 50% 45%, #ffffffee 28%, #ffffff00 62%) padding-box,
+    conic-gradient(from 20deg, #FFD3DA, #FFEDB8, #D3F3CB, #CDEBFA, #E3D9FF, #FFD3DA) padding-box,
+    conic-gradient(#FF9AA8, #FFC83D, #8BE38B, #7FD0F2, #B9A6F2, #FF9AA8) border-box;
+}
+.sticker.brillant { border-color: #E5A100; background: linear-gradient(135deg, #FFF6CF, #FFD45C 45%, #FFF0B3 55%, #F2B200); }
+.sticker.brillant:not(.missing)::after {
+  content: ""; position: absolute; inset: -40%; background: linear-gradient(115deg, transparent 40%, #ffffffcc 50%, transparent 60%);
+  animation: shine 2.6s ease-in-out infinite;
+}
+@keyframes shine { 0% { transform: translateX(-60%); } 60%, 100% { transform: translateX(60%); } }
+.sticker.missing { background: #F1E8D6; border-color: #F1E8D6; box-shadow: none; }
+.sticker.missing.rare, .sticker.missing.brillant { border-style: dashed; border-color: #DCCDB0; background: #F1E8D6; }
+.sticker.missing .sticker-art { filter: brightness(0); opacity: .1; }
+.sticker-mystery { position: absolute; font-size: 2rem; font-weight: 700; color: #C9B894; }
+.sticker-count { position: absolute; right: 6px; bottom: 4px; padding: 0 7px; border-radius: 99px; background: var(--accent); color: #fff; font-size: .85rem; font-weight: 700; }
+
+.pack-open { position: relative; display: flex; flex-direction: column; align-items: center; gap: 16px; min-height: 360px; justify-content: center; }
+.pack {
+  position: relative; width: 200px; height: 260px; border-radius: 26px; overflow: hidden;
+  background: linear-gradient(150deg, #9B86FF, #7B61FF 55%, #FF9AA8); box-shadow: 0 10px 0 #5A43D6;
+  display: grid; place-items: center; animation: wiggle 1.6s ease-in-out infinite;
+}
+.pack::before { content: ""; position: absolute; left: 0; right: 0; top: 34px; height: 8px; background: repeating-linear-gradient(90deg, #ffffff88 0 10px, transparent 10px 18px); }
+.pack-mascot { width: 120px; margin-top: 30px; }
+.pack-q { position: absolute; top: 46px; right: 22px; font-size: 2.6rem; font-weight: 700; color: #fff; }
+.pack-shine { position: absolute; inset: -50%; background: linear-gradient(115deg, transparent 42%, #ffffff66 50%, transparent 58%); animation: shine 2.2s ease-in-out infinite; }
+@keyframes wiggle { 0%, 70%, 100% { transform: rotate(0); } 78% { transform: rotate(-5deg); } 86% { transform: rotate(5deg); } 94% { transform: rotate(-2deg); } }
+.pack-cards { display: none; gap: 12px; width: 100%; justify-content: center; }
+.pack-card { flex: 1; max-width: 150px; display: flex; flex-direction: column; align-items: center; gap: 8px; animation: flip-in .55s cubic-bezier(.3, 1.4, .5, 1) backwards; animation-delay: calc(.45s + var(--k) * .38s); }
+.pack-card .sticker { width: 100%; }
+@keyframes flip-in { from { transform: rotateY(90deg) scale(.6); opacity: 0; } }
+.pack-tag { display: inline-flex; align-items: center; gap: 3px; padding: 2px 10px; border-radius: 99px; background: #FFF1C2; color: #8A5A00; font-weight: 700; }
+.pack-tag img, .pack-tag svg { width: 18px; height: 18px; }
+.pack-tag.new { background: var(--accent); color: #fff; }
+.pack-hint { color: var(--muted); font-weight: 600; font-size: 1.15rem; }
+.pack-open.opened .pack { animation: burst .45s ease-in forwards; pointer-events: none; }
+@keyframes burst { 60% { transform: scale(1.15) rotate(4deg); opacity: 1; } 100% { transform: scale(1.6); opacity: 0; } }
+.pack-open.opened .pack-cards { display: flex; }
+.pack-open.opened .pack { position: absolute; }
+.pack-open.opened .pack-hint { display: none; }
+.pack-done[hidden] { display: none; }

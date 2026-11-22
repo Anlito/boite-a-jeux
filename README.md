@@ -16,6 +16,7 @@ Application web installable, sans compte, sans publicité, qui fonctionne hors l
 - `index.html`, `css/app.css` : la page et la charte graphique.
 - `js/main.js` : navigation entre les écrans.
 - `js/screens.js` : écrans communs (accueil, nombre de joueurs, qui joue, règles, partie, podium).
+- `js/album.js` et `js/core/stickers.js` : pièces et album d'autocollants (44 autocollants en 3 raretés, pochette à 5 pièces, un doublon rend une pièce).
 - `js/core/` : socle partagé — dessins (`art.js`), sons et voix (`sound.js`), profils et records (`store.js`), outils d'interface (`ui.js`), moteur des jeux dessinés (`stage.js` : terrain aux proportions fixes, boucle, particules).
 - `js/games/` : un fichier par jeu, déclaré dans `js/games/index.js`.
 - `sw.js` : fonctionnement hors ligne. Changer `VERSION` à chaque mise en ligne.

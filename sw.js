@@ -1,7 +1,7 @@
 // Garde l'application sur l'appareil pour jouer sans réseau.
 // Changer VERSION à chaque mise en ligne pour que les appareils récupèrent la nouvelle version.
 importScripts("js/core/images-list.js");
-const VERSION = "boite-a-jeux-0.4.0";
+const VERSION = "boite-a-jeux-0.5.0";
 const SHELL = [
   "./",
   "index.html",
@@ -10,6 +10,7 @@ const SHELL = [
   "css/app.css",
   "js/main.js",
   "js/screens.js",
+  "js/album.js",
   "js/core/art.js",
   "js/core/sound.js",
   "js/core/store.js",
@@ -17,6 +18,7 @@ const SHELL = [
   "js/core/stage.js",
   "js/core/orientation.js",
   "js/core/images-list.js",
+  "js/core/stickers.js",
   "js/games/index.js",
   "js/games/top-depart.js",
   "js/games/sumo-bulles.js",

@@ -64,6 +64,36 @@ export const store = {
     return { newRecord, ...current };
   },
 
+  /* Pièces et autocollants, par profil */
+
+  coins(profileId) { return this.profile(profileId)?.coins || 0; },
+
+  addCoins(profileId, amount) {
+    const profile = this.profile(profileId);
+    if (!profile || !amount) return;
+    profile.coins = (profile.coins || 0) + amount;
+    save();
+  },
+
+  stickers(profileId) { return this.profile(profileId)?.stickers || {}; },
+
+  // Paie la pochette, colle les autocollants ; un doublon rend une pièce.
+  // Renvoie [{ id, isNew }] ou null si pas assez de pièces.
+  openPack(profileId, price, ids) {
+    const profile = this.profile(profileId);
+    if (!profile || (profile.coins || 0) < price) return null;
+    profile.coins -= price;
+    profile.stickers ||= {};
+    const result = ids.map(id => {
+      const isNew = !profile.stickers[id];
+      profile.stickers[id] = (profile.stickers[id] || 0) + 1;
+      if (!isNew) profile.coins += 1;
+      return { id, isNew };
+    });
+    save();
+    return result;
+  },
+
   bestStars(gameId) {
     return Math.max(0, ...data.profiles.map(p => this.result(p.id, gameId).stars));
   }
