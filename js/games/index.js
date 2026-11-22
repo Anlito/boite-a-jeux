@@ -4,7 +4,8 @@ import sumoBulles from "./sumo-bulles.js";
 import lesCanons from "./les-canons.js";
 import astroBalles from "./astro-balles.js";
 import courseGrenouilles from "./course-grenouilles.js";
+import panierFruits from "./panier-fruits.js";
 
-export const GAMES = [topDepart, sumoBulles, lesCanons, astroBalles, courseGrenouilles];
+export const GAMES = [topDepart, sumoBulles, lesCanons, astroBalles, courseGrenouilles, panierFruits];
 
 export const gameById = id => GAMES.find(game => game.id === id);
