@@ -328,7 +328,7 @@ export function podium(app, { session, result }) {
       return `<div class="step place-${Math.min(r.place, 4)}" style="--seat:${seat.color};--seat-deep:${seat.deep};--seat-soft:${seat.soft}">
         <span class="step-art">${seat.art}</span>
         <span class="step-name">${seat.label}</span>
-        <span class="step-block"><b>${r.place}</b><small>${r.score} pt${r.score > 1 ? "s" : ""}</small></span>
+        <span class="step-block"><b>${r.place}</b><small>${r.label ?? `${r.score} pt${r.score > 1 ? "s" : ""}`}</small></span>
       </div>`;
     }).join("")}</div>`;
     say(winners.length > 1 ? "Égalité ! Une revanche ?" : `Bravo ${winnerSeat.label} ! Tu gagnes !`);

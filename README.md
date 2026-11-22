@@ -8,13 +8,15 @@ Application web installable, sans compte, sans publicité, qui fonctionne hors l
 | Jeu | Joueurs | État |
 | --- | --- | --- |
 | Top départ | 1 à 4, robots | Jouable |
+| Sumo-bulles | 1 à 4, robots | Jouable |
+| Les canons | 1 à 4, robots, chacun son tour | Jouable |
 
 ## Organisation
 
 - `index.html`, `css/app.css` : la page et la charte graphique.
 - `js/main.js` : navigation entre les écrans.
 - `js/screens.js` : écrans communs (accueil, nombre de joueurs, qui joue, règles, partie, podium).
-- `js/core/` : socle partagé — dessins (`art.js`), sons et voix (`sound.js`), profils et records (`store.js`), outils d'interface (`ui.js`).
+- `js/core/` : socle partagé — dessins (`art.js`), sons et voix (`sound.js`), profils et records (`store.js`), outils d'interface (`ui.js`), moteur des jeux dessinés (`stage.js` : terrain aux proportions fixes, boucle, particules).
 - `js/games/` : un fichier par jeu, déclaré dans `js/games/index.js`.
 - `sw.js` : fonctionnement hors ligne. Changer `VERSION` à chaque mise en ligne.
 
@@ -35,7 +37,7 @@ export default {
 };
 ```
 
-`ctx.finish` reçoit soit `{ ranking: [{ seat, score }] }` (à plusieurs), soit `{ solo: { stars, value, lowerIsBetter, label, speech, format, next } }`.
+`ctx.finish` reçoit soit `{ ranking: [{ seat, score, label? }] }` (à plusieurs), soit `{ solo: { stars, value, lowerIsBetter, label, speech, format, next } }`.
 
 ## Visuels
 

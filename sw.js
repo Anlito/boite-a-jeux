@@ -1,6 +1,6 @@
 // Garde l'application sur l'appareil pour jouer sans réseau.
 // Changer VERSION à chaque mise en ligne pour que les appareils récupèrent la nouvelle version.
-const VERSION = "boite-a-jeux-0.1.0";
+const VERSION = "boite-a-jeux-0.2.0";
 const SHELL = [
   "./",
   "index.html",
@@ -13,8 +13,11 @@ const SHELL = [
   "js/core/sound.js",
   "js/core/store.js",
   "js/core/ui.js",
+  "js/core/stage.js",
   "js/games/index.js",
-  "js/games/top-depart.js"
+  "js/games/top-depart.js",
+  "js/games/sumo-bulles.js",
+  "js/games/les-canons.js"
 ];
 
 self.addEventListener("install", event => {
