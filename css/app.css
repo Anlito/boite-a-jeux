@@ -807,7 +807,7 @@ h1, h2, h3, h4, p { margin: 0; }
 .ce-choice.good { background: #27AE60; color: #fff; box-shadow: 0 6px 0 #18804A; }
 .ce-choice.bad { background: #EB5757; color: #fff; box-shadow: 0 6px 0 #BE3434; animation: shake .4s; }
 .ce-ask { text-align: center; font-weight: 700; font-size: clamp(1.1rem, 4vmin, 1.6rem); color: var(--seat-deep); margin: 4px 0; }
-.ce-grades { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.ce-grades { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 .ce.n3 .ce-grades, .ce.n4 .ce-grades { grid-template-columns: repeat(2, 1fr); }
 .ce-grade { border: 0; border-radius: 16px; background: #fff; color: var(--ink); font: inherit; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; box-shadow: 0 5px 0 var(--seat), inset 0 0 0 3px var(--seat); padding: 4px; }
 .ce-grade b { font-size: clamp(1.1rem, 4.2vmin, 1.7rem); }

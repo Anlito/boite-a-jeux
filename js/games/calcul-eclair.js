@@ -1,6 +1,7 @@
 // Calcul-éclair : un calcul s'affiche dans chaque zone, adapté au niveau de chacun (du « petit »
-// qui compte jusqu'à 10 au CM2). On touche la bonne réponse parmi quatre ; le plus rapide marque.
-// En solo : des séries de calculs contre la montre, du CP au CM2.
+// qui compte jusqu'à 10 au CE2). On touche la bonne réponse parmi quatre ; le plus rapide marque.
+// En solo : des séries de calculs contre la montre.
+// Les calculs restent simples : additions, soustractions, tables de 2 et de 3.
 import { play, say } from "../core/sound.js";
 import { h } from "../core/ui.js";
 import { createLoop } from "../core/stage.js";
@@ -10,27 +11,25 @@ const ROUND_TIME = 12;           // secondes pour répondre à plusieurs
 const MEMORY = "boite-a-jeux.calcul";   // dernier niveau choisi par chaque enfant
 
 const GRADES = [
-  { id: "petit", label: "Petit", sub: "jusqu'à 10" },
-  { id: "cp", label: "CP", sub: "+ et −" },
-  { id: "ce1", label: "CE1", sub: "jusqu'à 100" },
-  { id: "ce2", label: "CE2", sub: "tables 2 à 5" },
-  { id: "cm1", label: "CM1", sub: "tables et ÷" },
-  { id: "cm2", label: "CM2", sub: "grands calculs" }
+  { id: "petit", label: "Petit", sub: "+ jusqu'à 10" },
+  { id: "cp", label: "CP", sub: "+ et − jusqu'à 20" },
+  { id: "ce1", label: "CE1", sub: "+ et − jusqu'à 100" },
+  { id: "ce2", label: "CE2", sub: "+, − et tables 2, 3" }
 ];
 
 // Niveaux solo : le type de calculs, le nombre de calculs, le temps pour chacun, et les bonnes réponses
 // pour 1, 2 et 3 étoiles.
 const LEVELS = [
   { gen: "petit", count: 10, time: 12, stars: [5, 7, 9], goal: "Des additions jusqu'à 10. Compte les points si tu veux !" },
-  { gen: "cp-plus", count: 10, time: 12, stars: [5, 7, 9], goal: "Des additions jusqu'à 20. Réponds avant la fin de la barre !" },
-  { gen: "cp", count: 10, time: 11, stars: [5, 7, 9], goal: "Des additions et des soustractions jusqu'à 20." },
-  { gen: "ce1-plus", count: 10, time: 11, stars: [5, 7, 9], goal: "Des calculs jusqu'à 100. Pense aux dizaines !" },
-  { gen: "ce1-fois", count: 10, time: 10, stars: [5, 7, 9], goal: "Les tables de 2, de 5 et de 10." },
-  { gen: "ce2-tables", count: 12, time: 10, stars: [6, 9, 11], goal: "Les tables de 2 à 5. Une série de 3 bonnes réponses donne un bonus !" },
-  { gen: "ce2", count: 12, time: 9, stars: [6, 9, 11], goal: "Un mélange de calculs du CE2. Vite et bien !" },
-  { gen: "cm1-tables", count: 12, time: 9, stars: [6, 9, 11], goal: "Toutes les tables jusqu'à 9." },
-  { gen: "cm1", count: 12, time: 8, stars: [6, 9, 11], goal: "Tables, divisions et compléments à 100." },
-  { gen: "cm2", count: 15, time: 8, stars: [8, 11, 14], goal: "Le défi des champions : les calculs du CM2 !" }
+  { gen: "plus20", count: 10, time: 12, stars: [5, 7, 9], goal: "Des additions jusqu'à 20. Réponds avant la fin de la barre !" },
+  { gen: "moins20", count: 10, time: 12, stars: [5, 7, 9], goal: "Des soustractions jusqu'à 20." },
+  { gen: "cp", count: 10, time: 11, stars: [5, 7, 9], goal: "Additions et soustractions mélangées : regarde bien le signe !" },
+  { gen: "plus100", count: 10, time: 12, stars: [5, 7, 9], goal: "Des additions jusqu'à 100. Pense aux dizaines !" },
+  { gen: "moins100", count: 10, time: 12, stars: [5, 7, 9], goal: "Des soustractions jusqu'à 100." },
+  { gen: "table2", count: 10, time: 10, stars: [5, 7, 9], goal: "La table de 2. Une série de 3 bonnes réponses donne un bonus !" },
+  { gen: "table3", count: 10, time: 10, stars: [5, 7, 9], goal: "La table de 3." },
+  { gen: "tables", count: 12, time: 9, stars: [6, 9, 11], goal: "Les tables de 2 et de 3 mélangées." },
+  { gen: "ce2", count: 15, time: 9, stars: [8, 11, 14], goal: "Le défi des champions : additions, soustractions et tables de 2 et 3 !" }
 ];
 const ROBOT = {
   1: { time: [4.5, 7.5], right: 0.8, grade: "cp" },
@@ -42,59 +41,45 @@ const rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 const between = (a, b) => a + Math.random() * (b - a);
 const pickOne = list => list[Math.floor(Math.random() * list.length)];
 const shuffle = list => list.map(v => [Math.random(), v]).sort((a, b) => a[0] - b[0]).map(p => p[1]);
-const fr = n => Number.isInteger(n) ? String(n) : n.toFixed(1).replace(".", ",");
+const fr = n => String(n);
 
 /* ---------- Les calculs ---------- */
 
-const plus = (a, b) => ({ text: `${fr(a)} + ${fr(b)}`, answer: a + b });
-const minus = (a, b) => ({ text: `${fr(a)} − ${fr(b)}`, answer: a - b });
-const times = (a, b) => ({ text: `${a} × ${b}`, answer: a * b, table: [a, b] });
-const divide = (a, b) => ({ text: `${a * b} ÷ ${a}`, answer: b });
+const plus = (a, b) => ({ text: `${a} + ${b}`, answer: a + b });
+const minus = (a, b) => ({ text: `${a} − ${b}`, answer: a - b });
+// Table de n : parfois « n × 4 », parfois « 4 × n ».
+const table = n => { const b = rand(1, 10); return Math.random() < 0.5 ? { text: `${n} × ${b}`, answer: n * b, table: [n, b] } : { text: `${b} × ${n}`, answer: n * b, table: [b, n] }; };
 
 const GEN = {
   petit() { const a = rand(0, 7), b = rand(1, 10 - a); return { ...plus(a, b), dots: [a, b] }; },
-  "cp-plus"() { const a = rand(2, 15), b = rand(1, 20 - a); return plus(a, b); },
-  cp() { if (Math.random() < 0.5) return GEN["cp-plus"](); const a = rand(5, 20), b = rand(1, a); return minus(a, b); },
-  "ce1-plus"() {
+  plus20() { const a = rand(2, 15), b = rand(1, 20 - a); return plus(a, b); },
+  moins20() { const a = rand(5, 20), b = rand(1, a); return minus(a, b); },
+  cp() { return Math.random() < 0.5 ? GEN.plus20() : GEN.moins20(); },
+  plus100() {
     const kind = rand(0, 3);
-    if (kind === 0) return plus(rand(1, 8) * 10, rand(1, 9));
-    if (kind === 1) { const a = rand(12, 79); return plus(a, rand(2, Math.min(20, 99 - a))); }
-    if (kind === 2) { const a = rand(20, 99); return minus(a, rand(2, Math.min(19, a))); }
-    return plus(rand(1, 5) * 10, rand(1, 4) * 10);
+    if (kind === 0) return plus(rand(1, 8) * 10, rand(1, 9));          // 40 + 7
+    if (kind === 1) return plus(rand(1, 5) * 10, rand(1, 4) * 10);     // 30 + 20
+    const a = rand(11, 79);
+    return plus(a, rand(2, Math.min(kind === 2 ? 9 : 20, 99 - a)));    // 46 + 8, 35 + 17
   },
-  "ce1-fois"() { return times(pickOne([2, 5, 10]), rand(1, 10)); },
-  "ce2-tables"() { return Math.random() < 0.5 ? times(rand(2, 5), rand(2, 10)) : times(rand(2, 10), rand(2, 5)); },
-  ce2() {
-    const kind = rand(0, 3);
-    if (kind === 0) return GEN["ce2-tables"]();
-    if (kind === 1) { const a = rand(15, 70); return plus(a, rand(11, 99 - a)); }
-    if (kind === 2) { const a = rand(30, 99); return minus(a, rand(11, a - 5)); }
-    return times(rand(2, 9) * (Math.random() < 0.5 ? 1 : 10), 10);
+  moins100() {
+    const kind = rand(0, 2);
+    if (kind === 0) { const a = rand(3, 9) * 10; return minus(a, rand(1, a / 10 - 1) * 10); }   // 70 − 30
+    const a = rand(20, 99);
+    return minus(a, rand(2, kind === 1 ? Math.min(9, a % 10 || 9) : Math.min(19, a - 1)));     // 47 − 5, 52 − 14
   },
-  "cm1-tables"() { return times(rand(2, 9), rand(2, 9)); },
-  cm1() {
-    const kind = rand(0, 3);
-    if (kind === 0) return GEN["cm1-tables"]();
-    if (kind === 1) return divide(rand(2, 9), rand(2, 9));
-    if (kind === 2) { const a = rand(1, 9) * 10 + rand(0, 1) * 5; return { text: `${a} + ? = 100`, answer: 100 - a }; }
-    const a = rand(2, 9) * 100; return Math.random() < 0.5 ? plus(a, rand(1, 9) * 10) : minus(a, rand(1, 9) * 10);
-  },
-  cm2() {
-    const kind = rand(0, 4);
-    if (kind === 0) return times(rand(6, 9), rand(6, 9));
-    if (kind === 1) return times(rand(11, 25), rand(2, 5));
-    if (kind === 2) return divide(rand(3, 9), rand(4, 12));
-    if (kind === 3) { const a = rand(1, 9) + 0.5, b = rand(1, 5) + 0.5; return plus(a, b); }
-    const a = rand(2, 9) * 2 * 10; return { text: `La moitié de ${a}`, answer: a / 2 };
-  }
+  ce1() { return Math.random() < 0.5 ? GEN.plus100() : GEN.moins100(); },
+  table2() { return table(2); },
+  table3() { return table(3); },
+  tables() { return table(pickOne([2, 3])); },
+  ce2() { const k = rand(0, 2); return k === 0 ? GEN.plus100() : k === 1 ? GEN.moins100() : GEN.tables(); }
 };
-GEN.ce1 = () => Math.random() < 0.65 ? GEN["ce1-plus"]() : GEN["ce1-fois"]();
 
 // Trois mauvaises réponses qui ressemblent à la bonne.
 function choicesFor(q) {
   const right = q.answer;
   const near = new Set();
-  const step = Number.isInteger(right) ? 1 : 0.5;
+  const step = 1;
   const ideas = [right + step, right - step, right + 2 * step, right - 2 * step, right + 10, right - 10];
   if (q.table) { const [a, b] = q.table; ideas.push(a * (b + 1), a * (b - 1), (a + 1) * b, (a - 1) * b); }
   if (right >= 10 && Number.isInteger(right) && right % 10) { const s = String(right); ideas.push(Number(s.split("").reverse().join(""))); }
@@ -128,7 +113,7 @@ function mount(root, ctx) {
   const N = players.length;
   const memory = remembered();
   // Niveau de calcul de chaque joueur (le robot calcule au niveau de sa force).
-  const grade = players.map(p => p.kind === "robot" ? ROBOT[p.level]?.grade || "ce1" : memory[p.profile?.id] || null);
+  const grade = players.map(p => p.kind === "robot" ? ROBOT[p.level]?.grade || "ce1" : (GRADES.some(g => g.id === memory[p.profile?.id]) ? memory[p.profile?.id] : null));
   const scores = players.map(() => 0);
   const series = players.map(() => 0);
   let best = 0, right = 0, asked = 0;
@@ -192,7 +177,8 @@ function mount(root, ctx) {
   }
 
   function startMatch() {
-    players.forEach((p, i) => { if (p.kind === "human" && p.profile) remember(p.profile.id, grade[i]); });
+    // Les niveaux solo ont leurs propres calculs : on ne retient que le niveau choisi par l'enfant.
+    if (!level) players.forEach((p, i) => { if (p.kind === "human" && p.profile) remember(p.profile.id, grade[i]); });
     renderHead();
     say(solo ? "C'est parti !" : "Le plus rapide marque !");
     after(0.6, nextRound);
@@ -217,7 +203,7 @@ function mount(root, ctx) {
     });
     players.forEach((p, i) => {
       const q = questions[i];
-      body(i).innerHTML = `<div class="ce-question"><span class="ce-q">${q.text}${q.text.includes("?") || q.text.startsWith("La") ? "" : " = ?"}</span>${q.dots ? dotsHTML(q.dots) : ""}</div>
+      body(i).innerHTML = `<div class="ce-question"><span class="ce-q">${q.text} = ?</span>${q.dots ? dotsHTML(q.dots) : ""}</div>
         <div class="ce-choices">${q.choices.map(v => `<button class="ce-choice" data-v="${v}">${fr(v)}</button>`).join("")}</div>`;
       zones[i].classList.toggle("hidden-q", openAt[i] > clock);
       zones[i].classList.remove("won", "wrong-zone");
@@ -379,12 +365,12 @@ export default {
   theme: { bg: "#FFF1C9", ink: "#8A5A00" },
   vignette: () => `<svg viewBox="0 0 160 120" aria-hidden="true">
     <rect x="18" y="16" width="124" height="40" rx="14" fill="#fff" stroke="#2B2350" stroke-width="3"/>
-    <text x="80" y="45" text-anchor="middle" font-size="26" font-weight="700" fill="#2B2350" font-family="Fredoka, sans-serif">7 × 8 = ?</text>
+    <text x="80" y="45" text-anchor="middle" font-size="26" font-weight="700" fill="#2B2350" font-family="Fredoka, sans-serif">3 × 4 = ?</text>
     <rect x="18" y="64" width="58" height="22" rx="9" fill="#DCE9FC" stroke="#2F80ED" stroke-width="3"/>
     <rect x="84" y="64" width="58" height="22" rx="9" fill="#27AE60" stroke="#18804A" stroke-width="3"/>
     <rect x="18" y="92" width="58" height="22" rx="9" fill="#DCE9FC" stroke="#2F80ED" stroke-width="3"/>
     <rect x="84" y="92" width="58" height="22" rx="9" fill="#DCE9FC" stroke="#2F80ED" stroke-width="3"/>
-    <text x="113" y="81" text-anchor="middle" font-size="15" font-weight="700" fill="#fff" font-family="Fredoka, sans-serif">56</text>
+    <text x="113" y="81" text-anchor="middle" font-size="15" font-weight="700" fill="#fff" font-family="Fredoka, sans-serif">12</text>
     <path d="M140 8 l-10 16 h8 l-6 14 l14 -18 h-8 l6 -12z" fill="#FFC83D" stroke="#2B2350" stroke-width="2" stroke-linejoin="round"/>
   </svg>`,
   rules: {
