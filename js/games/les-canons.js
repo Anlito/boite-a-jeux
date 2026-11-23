@@ -1,6 +1,6 @@
 // Les canons : chacun son tour, tirer en arrière pour viser le château des autres.
 // Le vent change, le terrain se creuse à chaque tir. Dernier château debout gagne.
-import { icon, shapeSVG } from "../core/art.js";
+import { icon, shapeSVG, hasImage, imagePath } from "../core/art.js";
 import { play, say } from "../core/sound.js";
 import { h } from "../core/ui.js";
 import { createStage, createLoop, artImage, text, createParticles } from "../core/stage.js";
@@ -60,12 +60,18 @@ function mount(root, ctx) {
   const solo = ctx.count === 1;
   const level = ctx.level;
   const players = ctx.seats;
-  const stage = createStage(root, { width: W, height: H, background: "#CDEBFF" });
+  const stage = createStage(root, { width: W, height: H, background: hasImage("les-canons/fond-ciel.jpg") ? "#FFF6E8" : "#CDEBFF" });
   const g = stage.ctx;
   const particles = createParticles();
+  // Images du lot 5 (null si absentes : on garde le dessin).
+  const picture = name => hasImage(`les-canons/${name}`) ? artImage(`<img src="${imagePath(`les-canons/${name}`)}">`) : null;
+  const IMG = { sky: picture("fond-ciel.jpg"), ball: picture("boulet.png"), base: picture("canon-socle.png"), tube: picture("canon-tube.png"), flag: picture("drapeau-vent.png"), boom: picture("explosion-rigolote.png") };
+  const castleArt = name => ({ whole: picture(`chateau-${name}.png`), hurt: picture(`chateau-${name}-abime.png`) });
+  const ready = img => img && img.complete && img.naturalWidth;
+  let booms = [];
 
   const xs = CASTLE_X[players.length];
-  const castles = players.map((p, i) => ({ seat: i, p, x: xs[i], y: 0, hp: HP, hits: 0, angle: i < players.length / 2 || solo ? -0.8 : -Math.PI + 0.8, flash: 0, image: artImage(p.art), out: false }));
+  const castles = players.map((p, i) => ({ seat: i, p, x: xs[i], y: 0, hp: HP, hits: 0, angle: i < players.length / 2 || solo ? -0.8 : -Math.PI + 0.8, flash: 0, image: artImage(p.art), art: castleArt((p.name || "bleu").toLowerCase()), out: false }));
   let ground = makeTerrain(xs, solo, level);
   const groundAt = x => {
     const f = clamp(x, 0, W) / STEP, i = Math.floor(f), k = f - i;
@@ -184,7 +190,8 @@ function mount(root, ctx) {
       const bottom = at.y + Math.sqrt(CRATER * CRATER - dx * dx);
       if (ground[i] < bottom) ground[i] = Math.min(H - 20, Math.max(ground[i], bottom));
     }
-    particles.burst(at.x, at.y, "#B47A4A", { count: 16, speed: 300, size: 8, life: 0.8, gravity: 600 });
+    booms.push({ x: at.x, y: at.y, age: 0 });
+    particles.burst(at.x, at.y, "#93B86E", { count: 16, speed: 300, size: 8, life: 0.8, gravity: 600 });
     CONFETTI.forEach(color => particles.burst(at.x, at.y, color, { count: 5, speed: 340, size: 7, life: 1, gravity: 300 }));
     play("wrong");
     // Châteaux touchés.
@@ -361,6 +368,9 @@ function mount(root, ctx) {
 
   function draw() {
     stage.begin();
+    const t = performance.now() / 1000;
+    if (ready(IMG.sky)) g.drawImage(IMG.sky, 0, 0, W, H);
+    else {
     const sky = g.createLinearGradient(0, 0, 0, H);
     sky.addColorStop(0, "#9FDBFF");
     sky.addColorStop(1, "#FFF1D6");
@@ -368,11 +378,11 @@ function mount(root, ctx) {
     g.fillRect(0, 0, W, H);
     g.fillStyle = "#FFE7A3";
     g.beginPath(); g.arc(1420, 120, 60, 0, Math.PI * 2); g.fill();
-    const t = performance.now() / 1000;
     for (let i = 0; i < 4; i++) {
       const x = ((i * 430 + t * (14 + wind * 40)) % 1900 + 1900) % 1900 - 150, y = 90 + (i % 2) * 70;
       g.fillStyle = "#ffffffd0";
       [[0, 0, 46], [42, -14, 38], [80, 4, 34], [40, 12, 36]].forEach(([dx, dy, r]) => { g.beginPath(); g.arc(x + dx, y + dy, r, 0, Math.PI * 2); g.fill(); });
+    }
     }
     // Terrain
     g.beginPath();
@@ -381,15 +391,18 @@ function mount(root, ctx) {
     g.lineTo(W, H);
     g.closePath();
     const dirt = g.createLinearGradient(0, 380, 0, H);
-    dirt.addColorStop(0, "#D9A066");
-    dirt.addColorStop(1, "#A86B3E");
+    dirt.addColorStop(0, "#B8D28E");
+    dirt.addColorStop(1, "#8FB36A");
     g.fillStyle = dirt;
     g.fill();
     g.beginPath();
     ground.forEach((y, i) => (i ? g.lineTo(i * STEP, y) : g.moveTo(0, y)));
-    g.strokeStyle = "#6CBF5A";
-    g.lineWidth = 14;
+    g.strokeStyle = "#D2E6AE";
+    g.lineWidth = 16;
     g.lineJoin = "round";
+    g.stroke();
+    g.strokeStyle = "#2B2350";
+    g.lineWidth = 4;
     g.stroke();
     // Caisses
     for (const crate of crates) if (!crate.hit) drawCrate(crate);
@@ -419,11 +432,26 @@ function mount(root, ctx) {
     if (shot) {
       shot.trail.forEach((p, i) => { g.globalAlpha = (i / shot.trail.length) * 0.5; g.fillStyle = "#fff"; g.beginPath(); g.arc(p.x, p.y, 4 + i * 0.4, 0, Math.PI * 2); g.fill(); });
       g.globalAlpha = 1;
+      if (ready(IMG.ball)) {
+        g.save(); g.translate(shot.x, shot.y); g.rotate(t * 8);
+        g.drawImage(IMG.ball, -26, -26, 52, 52);
+        g.restore();
+      } else {
       g.fillStyle = "#2B2350";
       g.beginPath(); g.arc(shot.x, shot.y, 13, 0, Math.PI * 2); g.fill();
       g.fillStyle = "#ffffff88";
       g.beginPath(); g.arc(shot.x - 4, shot.y - 4, 4, 0, Math.PI * 2); g.fill();
+      }
     }
+    for (const b of booms) {
+      b.age += 1 / 60;
+      if (!ready(IMG.boom) || b.age > 0.7) continue;
+      const size = 150 + b.age * 120;
+      g.globalAlpha = Math.min(1, 2.2 - b.age * 3);
+      g.drawImage(IMG.boom, b.x - size / 2, b.y - size * 0.6, size, size);
+      g.globalAlpha = 1;
+    }
+    booms = booms.filter(b => b.age <= 0.7);
     particles.draw(g);
     drawWind();
     if (solo) {
@@ -439,7 +467,14 @@ function mount(root, ctx) {
     const x = W / 2, y = 60;
     g.fillStyle = "#ffffffe0";
     g.beginPath(); g.roundRect(x - 130, y - 36, 260, 72, 24); g.fill();
-    text(g, "Vent", x - 70, y, { size: 28 });
+    if (ready(IMG.flag)) {
+      // Drapeau tourné dans le sens du vent ; il pend quand il n'y a pas de vent.
+      g.save(); g.translate(x - 82, y);
+      if (wind < 0) g.scale(-1, 1);
+      if (!wind) g.rotate(0.9);
+      g.drawImage(IMG.flag, -36, -36, 72, 72);
+      g.restore();
+    } else text(g, "Vent", x - 70, y, { size: 28 });
     if (!wind) { text(g, "calme", x + 40, y, { size: 26, color: "#6B6490", weight: 500 }); return; }
     const n = Math.round(Math.abs(wind) * 4), dir = Math.sign(wind);
     g.fillStyle = "#7B61FF";
@@ -469,6 +504,17 @@ function mount(root, ctx) {
       return;
     }
     const shake = c.flash > 0 ? Math.sin(c.flash * 60) * 4 : 0;
+    const art = c.hp < HP && ready(c.art.hurt) ? c.art.hurt : c.art.whole;
+    if (ready(art)) {
+      g.save();
+      g.translate(c.x + shake, c.y);
+      if (c.flash > 0) g.filter = "brightness(1.6)";
+      const size = 178;
+      g.drawImage(art, -size / 2, -size * 0.875 + 4, size, size);
+      g.filter = "none";
+      g.restore();
+      drawCannon(c, shake);
+    } else {
     g.save();
     g.translate(c.x + shake, c.y);
     g.scale(S, S);
@@ -492,14 +538,34 @@ function mount(root, ctx) {
     g.beginPath(); g.arc(0, -48, 15, 0, Math.PI * 2); g.fill();
     if (c.image.complete && c.image.naturalWidth) g.drawImage(c.image, -15, -63, 30, 30);
     g.restore();
+    }
     // Cœurs
-    if (!solo) for (let k = 0; k < HP; k++) text(g, k < c.hp ? "♥" : "♡", c.x - 36 + k * 36, c.y - 136 * S + 20, { size: 32, color: "#EB5757", stroke: "#fff" });
+    if (!solo) for (let k = 0; k < HP; k++) text(g, k < c.hp ? "♥" : "♡", c.x - 36 + k * 36, c.y - 196, { size: 32, color: "#EB5757", stroke: "#fff" });
     if (active() === c && (phase === "aim" || phase === "banner")) {
       const bob = Math.sin(performance.now() / 160) * 6;
       g.fillStyle = c.p.color;
       g.strokeStyle = "#fff";
       g.lineWidth = 4;
-      g.beginPath(); g.moveTo(c.x, c.y - 150 * S + bob); g.lineTo(c.x - 18, c.y - 150 * S - 28 + bob); g.lineTo(c.x + 18, c.y - 150 * S - 28 + bob); g.closePath(); g.fill(); g.stroke();
+      g.beginPath(); g.moveTo(c.x, c.y - 168 * S + bob); g.lineTo(c.x - 18, c.y - 168 * S - 28 + bob); g.lineTo(c.x + 18, c.y - 168 * S - 28 + bob); g.closePath(); g.fill(); g.stroke();
+    }
+  }
+
+  // Canon jouet (socle et tube du lot 5) posé en haut du château, là où partent les boulets.
+  function drawCannon(c, shake) {
+    const px = c.x + shake, py = c.y - 74 * S;
+    if (ready(IMG.tube)) {
+      const k = (54 * S) / 116;
+      g.save(); g.translate(px, py); g.rotate(c.angle);
+      if (Math.cos(c.angle) < 0) g.scale(1, -1);
+      g.drawImage(IMG.tube, -120 * k, -128 * k, 256 * k, 256 * k);
+      g.restore();
+    }
+    if (ready(IMG.base)) {
+      const k = 0.36;
+      g.save(); g.translate(px, py);
+      if (Math.cos(c.angle) < 0) g.scale(-1, 1);
+      g.drawImage(IMG.base, -128 * k, -122 * k, 256 * k, 256 * k);
+      g.restore();
     }
   }
 
