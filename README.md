@@ -15,6 +15,7 @@ Application web installable, sans compte, sans publicité, qui fonctionne hors l
 | Panier de fruits | 1 à 4 vergers, robots | Jouable |
 | Tir aux étoiles | 1 à 4, robots, chacun son tour | Jouable |
 | Serpentins | 1 à 4, robots (deux boutons : gauche, droite) | Jouable |
+| Patate chaude | 1 à 4, robots (mini-défis pour renvoyer la bombe) | Jouable |
 
 En solo, chaque jeu a 10 niveaux dessinés à la main (une étoile débloque le suivant) puis un défi libre, ouvert après le niveau 5.
 

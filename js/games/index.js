@@ -7,7 +7,8 @@ import courseGrenouilles from "./course-grenouilles.js";
 import panierFruits from "./panier-fruits.js";
 import tirEtoiles from "./tir-etoiles.js";
 import serpentins from "./serpentins.js";
+import patateChaude from "./patate-chaude.js";
 
-export const GAMES = [topDepart, sumoBulles, lesCanons, astroBalles, courseGrenouilles, panierFruits, tirEtoiles, serpentins];
+export const GAMES = [topDepart, sumoBulles, lesCanons, astroBalles, courseGrenouilles, panierFruits, tirEtoiles, serpentins, patateChaude];
 
 export const gameById = id => GAMES.find(game => game.id === id);
