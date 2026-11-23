@@ -6,7 +6,8 @@ import astroBalles from "./astro-balles.js";
 import courseGrenouilles from "./course-grenouilles.js";
 import panierFruits from "./panier-fruits.js";
 import tirEtoiles from "./tir-etoiles.js";
+import serpentins from "./serpentins.js";
 
-export const GAMES = [topDepart, sumoBulles, lesCanons, astroBalles, courseGrenouilles, panierFruits, tirEtoiles];
+export const GAMES = [topDepart, sumoBulles, lesCanons, astroBalles, courseGrenouilles, panierFruits, tirEtoiles, serpentins];
 
 export const gameById = id => GAMES.find(game => game.id === id);

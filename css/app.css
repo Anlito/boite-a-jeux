@@ -644,3 +644,37 @@ h1, h2, h3, h4, p { margin: 0; }
 .te-star.a { left: 30px; top: 40px; } .te-star.b { left: 130px; top: 50px; background: #70ECFF; }
 .te-ball { position: absolute; left: 82px; bottom: 16px; width: 16px; height: 16px; border-radius: 50%; background: #FFF4D9; animation: te-path 2.4s infinite; }
 @keyframes te-path { 0% { transform: none; } 30% { transform: translate(-6px, -82px); } 55% { transform: translate(-50px, -150px); } 80% { transform: translate(-40px, -60px); } 100% { transform: translate(-30px, 30px); } }
+
+/* ---------- Serpentins ---------- */
+
+/* Le terrain occupe l'espace entre les bandes des manettes (haut et bas). */
+.sp { position: absolute; inset: 0; background: #1B2145; --btn: clamp(54px, 14vmin, 86px); --band: calc(var(--btn) + 22px); }
+.sp-field { position: absolute; left: 0; right: 0; top: var(--band); bottom: var(--band); }
+.sp.n1 .sp-field { top: 0; }
+.sp-pad { width: auto; }
+.sp-pad .pad-inner { gap: 8px; padding: 6px; }
+.sp.n1 .pad-0 { left: 8px; right: 8px; translate: none; }
+.sp.n1 .pad-0 .pad-inner { justify-content: space-between; }
+.sp-btn {
+  flex: none; display: grid; place-items: center; width: var(--btn); aspect-ratio: 1; border-radius: 50%;
+  background: var(--seat); box-shadow: 0 6px 0 var(--seat-deep); pointer-events: none;
+  transition: transform .06s, box-shadow .06s;
+}
+.sp-btn svg { width: 48%; }
+.sp-btn.right svg { rotate: 180deg; }
+.sp-btn.on { transform: translateY(5px); box-shadow: 0 1px 0 var(--seat-deep); }
+.sp .pad-info { padding: 4px 8px; }
+.sp.n3 .pad-avatar, .sp.n4 .pad-avatar { display: none; }
+.sp.n3 .pad-pips, .sp.n4 .pad-pips { flex-direction: column; }
+.play:has(.sp.n3) .hold-pause, .play:has(.sp.n4) .hold-pause { top: 50%; transform: translateY(-50%); }
+
+.sp-demo { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.sp-demo svg { width: 240px; }
+.sp-demo path { stroke-dasharray: 240; animation: sp-draw 3s linear infinite; }
+.sp-demo-btns { display: flex; gap: 90px; }
+.sp-demo-btn { display: grid; place-items: center; width: 54px; height: 54px; border-radius: 50%; background: #2F80ED; box-shadow: 0 5px 0 #1C5DB8; }
+.sp-demo-btn svg { width: 50%; }
+.sp-demo-btn.right svg { rotate: 180deg; }
+.sp-demo-btn:first-child { animation: press 3s infinite; }
+.sp-demo-btn.right { animation: press 3s 1.5s infinite; }
+@keyframes sp-draw { from { stroke-dashoffset: 240; } to { stroke-dashoffset: 0; } }
