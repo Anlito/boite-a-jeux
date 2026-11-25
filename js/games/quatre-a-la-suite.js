@@ -136,6 +136,7 @@ function mount(root, ctx) {
     <div class="q4-board" style="--cols:${cols};--rows:${rows}">
       <div class="q4-drops"></div>
       <div class="q4-grid">${Array.from({ length: rows * cols }, (_, k) => `<span class="q4-hole" data-c="${k % cols}"></span>`).join("")}</div>
+      <svg class="q4-line" viewBox="0 0 ${cols} ${rows}" aria-hidden="true"></svg>
     </div>
     <div class="q4-msg"></div>
   </div>`);
@@ -143,6 +144,7 @@ function mount(root, ctx) {
   const drops = node.querySelector(".q4-drops");
   const gridEl = node.querySelector(".q4-grid");
   const msg = node.querySelector(".q4-msg");
+  const lineEl = node.querySelector(".q4-line");
 
   let grid, turn, phase = "play", clock = 0, events = [], robotAt = 0;
   const after = (delay, fn) => events.push({ time: clock + delay, fn });
@@ -151,6 +153,8 @@ function mount(root, ctx) {
     grid = Array.from({ length: rows }, () => Array(cols).fill(-1));
     drops.innerHTML = "";
     gridEl.querySelectorAll(".q4-hole").forEach(h => h.classList.remove("win"));
+    lineEl.innerHTML = "";
+    node.classList.remove("over");
     // Chacun commence à son tour ; en solo, le niveau dit qui commence la première partie.
     const robotFirst = solo && (setup.robotFirst ? game % 2 === 0 : game % 2 === 1);
     turn = solo ? (robotFirst ? 1 : 0) : game % 2;
@@ -202,6 +206,13 @@ function mount(root, ctx) {
         const r = Number(chip.style.getPropertyValue("--r")), c = Number(chip.style.getPropertyValue("--c"));
         if (won.cells.some(([rr, cc]) => rr === r && cc === c)) chip.classList.add("win");
       });
+      // Trait de la couleur du gagnant qui relie les quatre jetons, par-dessus la grille.
+      const [[r1, c1], , , [r2, c2]] = won.cells;
+      const seg = `x1="${c1 + 0.5}" y1="${r1 + 0.5}" x2="${c2 + 0.5}" y2="${r2 + 0.5}" pathLength="1"`;
+      lineEl.style.setProperty("--seat", players[won.who].color);
+      lineEl.style.setProperty("--seat-deep", players[won.who].deep);
+      lineEl.innerHTML = `<line class="edge" ${seg}/><line class="core" ${seg}/>`;
+      node.classList.add("over");
       msg.textContent = solo ? (won.who === 0 ? "Quatre à la suite ! Gagné !" : "Le robot a aligné quatre jetons !") : `${players[won.who].label} gagne la manche !`;
       msg.style.setProperty("--seat", players[won.who].color);
       play(solo && won.who === 1 ? "trap" : "win");
@@ -213,7 +224,7 @@ function mount(root, ctx) {
     showTurn();
     game++;
     const over = solo ? game >= SOLO_GAMES : wins.some(w => w >= MULTI_GOAL);
-    after(2.4, () => over ? finish() : newGame());
+    after(won ? 3.2 : 2.4, () => over ? finish() : newGame());
   }
 
   function finish() {

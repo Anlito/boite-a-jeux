@@ -12,7 +12,7 @@ Ce fichier sert à reprendre le travail dans une nouvelle conversation sans tout
 - Tout en français, vocabulaire simple, sans jargon.
 - Le README décrit l'organisation du code et l'interface d'un jeu (`mount`, `levels`, `finish`).
 
-## État actuel (version 0.32.0, fin novembre 2026)
+## État actuel (version 0.33.0, fin novembre 2026)
 
 17 jeux en ligne :
 
@@ -32,7 +32,7 @@ Ce fichier sert à reprendre le travail dans une nouvelle conversation sans tout
 | Paires cachées (mémoire) | `paires-cachees.js` | lots 13 et 14 (cartes, tapis, 8 couples d'animaux presque pareils pour le thème « pareils ») |
 | Petits bolides (course, joystick) | `petits-bolides.js` | lot 15 (la route reste dessinée par le jeu ; décor placé au hasard hors de la route) |
 | Palet glissant (1-2) | `palet-glissant.js` | vignette lot 17 ; lot 20 (bleu et rouge en image, autres couleurs dessinées) |
-| Quatre à la suite (1-2) | `quatre-a-la-suite.js` | vignette lot 17 ; lot 20 (bleu et rouge en image, autres couleurs dessinées) |
+| Quatre à la suite (1-2) | `quatre-a-la-suite.js` | vignette lot 17 ; lot 20 (bleu et rouge en image, autres couleurs dessinées) ; en fin de manche, trait et anneaux lumineux sur les 4 jetons gagnants |
 | La tour bancale | `tour-bancale.js` | lot 18 (étages découpés en bords + tranches à fenêtre, ville puis soir puis espace) |
 | L'orchestre | `orchestre.js` | lot 19 (instruments à la place des emojis, boutons clairs cerclés de couleur, note qui s’envole, scène) |
 

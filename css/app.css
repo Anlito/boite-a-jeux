@@ -1073,7 +1073,7 @@ h1, h2, h3, h4, p { margin: 0; }
 .q4-token { width: 26px; height: 26px; border-radius: 50%; background: var(--seat); box-shadow: inset 0 -4px 0 var(--seat-deep); }
 .q4-wins { margin-left: auto; font-size: 1.5rem; font-weight: 700; color: var(--seat-deep); }
 .q4-board { grid-row: 2; position: relative; container-type: size; min-height: 0; }
-.q4-grid, .q4-drops {
+.q4-grid, .q4-drops, .q4-line {
   position: absolute; left: 50%; top: 50%; translate: -50% -50%;
   width: min(100cqw, calc(100cqh * var(--cols) / var(--rows))); aspect-ratio: var(--cols) / var(--rows);
 }
@@ -1084,7 +1084,7 @@ h1, h2, h3, h4, p { margin: 0; }
   position: absolute; left: calc((var(--c) + 0.5) / var(--cols) * 100%); top: -12%;
   width: calc(100% / var(--cols) * 0.74); aspect-ratio: 1; translate: -50% -50%; border-radius: 50%;
   background: var(--seat); box-shadow: inset 0 -6px 0 var(--seat-deep), inset 0 4px 0 #ffffff66;
-  transition: top .42s cubic-bezier(.5, 0, .8, 1.2);
+  transition: top .42s cubic-bezier(.5, 0, .8, 1.2), opacity .4s;
 }
 /* Jetons du lot 20 : l'image a 10 % de marge, on l'agrandit pour que le jeton remplisse le rond. */
 .q4-chip.pictured, .q4-token.pictured { background-color: transparent; background-position: center; background-size: 127%; background-repeat: no-repeat; box-shadow: none; }
@@ -1092,6 +1092,19 @@ h1, h2, h3, h4, p { margin: 0; }
 .q4-chip.down { top: calc((var(--r) + 0.5) / var(--rows) * 100%); }
 .q4-chip.win { animation: q4-win .7s ease-in-out infinite; box-shadow: 0 0 0 5px #fff, inset 0 -6px 0 var(--seat-deep); }
 @keyframes q4-win { 50% { transform: scale(1.12); } }
+/* Fin de manche : les autres jetons pâlissent, les trous gagnants brillent, un trait relie les quatre. */
+.q4.over .q4-chip:not(.win) { opacity: .35; }
+.q4-hole { position: relative; }
+.q4-hole.win::after {
+  content: ""; position: absolute; inset: 9%; border-radius: 50%;
+  box-shadow: 0 0 0 4px #fff, 0 0 14px 6px #FFE58A; animation: q4-glow .7s ease-in-out infinite;
+}
+@keyframes q4-glow { 50% { box-shadow: 0 0 0 6px #fff, 0 0 22px 12px #FFE58A; scale: 1.08; } }
+.q4-line { z-index: 3; pointer-events: none; overflow: visible; }
+.q4-line line { fill: none; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: q4-draw .5s .15s ease-out forwards; }
+.q4-line .edge { stroke: #fff; stroke-width: .3; }
+.q4-line .core { stroke: var(--seat-deep); stroke-width: .16; }
+@keyframes q4-draw { to { stroke-dashoffset: 0; } }
 .q4-msg { grid-row: 3; text-align: center; font-weight: 700; font-size: clamp(1.1rem, 4vmin, 1.5rem); color: var(--seat, var(--ink)); min-height: 1.5em; }
 @media (orientation: landscape) {
   .q4 { grid-template-columns: minmax(150px, 22%) 1fr minmax(150px, 22%); grid-template-rows: 1fr auto; }
