@@ -57,7 +57,11 @@ function mount(root, ctx) {
   // Hauteur du verger selon la forme de la zone de chaque joueur (la même pour tous : c'est équitable).
   const zoneW = window.innerWidth / (n > 2 ? 2 : 1), zoneH = window.innerHeight / (n > 1 ? 2 : 1);
   const H = Math.round(clamp(W * zoneH / zoneW, 380, 1800));
-  const BASKET_Y = H - 110;
+  // Le panier est remonté : en dessous, une bande pour poser le doigt, loin du bord de l'écran
+  // (glisser tout en bas de l'écran change d'application sur beaucoup de téléphones).
+  const RAIL = Math.round(clamp(H * 0.2, 60, 300));
+  const BASKET_Y = H - 110 - RAIL;
+  const RAIL_TOP = BASKET_Y + 82, RAIL_BOTTOM = H - Math.round(Math.min(90, H * 0.08));
   const scale = H / 600;                                   // même temps de chute quelle que soit la hauteur
 
   const node = h(`<div class="pf td n${n}">${people.map((p, i) => `<section class="pf-zone pos-${i}" data-seat="${i}"></section>`).join("")}</div>`);
@@ -440,10 +444,29 @@ function mount(root, ctx) {
     g.restore();
   }
 
+  // Bande du doigt : une piste à la couleur du joueur, avec un rond sous le panier et des flèches.
+  function drawRail(f) {
+    const { g } = f, y = RAIL_TOP, hgt = RAIL_BOTTOM - RAIL_TOP, mid = y + hgt / 2;
+    g.save();
+    g.globalAlpha = 0.9;
+    g.beginPath(); g.roundRect(24, y, W - 48, hgt, hgt / 2); g.fillStyle = "#ffffffcc"; g.fill();
+    g.lineWidth = 6; g.strokeStyle = f.p.color; g.setLineDash([18, 14]); g.stroke(); g.setLineDash([]);
+    g.globalAlpha = 1;
+    g.fillStyle = f.p.color + "88";
+    for (const dir of [-1, 1]) {
+      const ax = W / 2 + dir * (W * 0.32);
+      g.beginPath(); g.moveTo(ax + dir * 26, mid); g.lineTo(ax - dir * 6, mid - 24); g.lineTo(ax - dir * 6, mid + 24); g.closePath(); g.fill();
+    }
+    g.beginPath(); g.arc(f.x, mid, Math.min(46, hgt * 0.38), 0, Math.PI * 2); g.fillStyle = f.p.color; g.fill();
+    g.lineWidth = 6; g.strokeStyle = "#fff"; g.stroke();
+    g.restore();
+  }
+
   function drawField(f) {
     const { g, stage } = f;
     stage.begin();
     drawScene(g);
+    drawRail(f);
     for (const it of f.items) drawItem(g, it);
     for (const w of f.wasps) drawWasp(g, w);
     drawBasket(f);

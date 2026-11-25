@@ -1,9 +1,19 @@
 // Tir aux étoiles : lancer une bille qui rebondit sur les champignons et ramasse des étoiles.
 // Chacun son tour, trois billes chacun, sur le même plateau. L'étoile d'or vaut 5 points.
-import { icon } from "../core/art.js";
+import { icon, hasImage, imagePath } from "../core/art.js";
 import { play, say } from "../core/sound.js";
 import { h } from "../core/ui.js";
-import { createStage, createLoop, text, createParticles } from "../core/stage.js";
+import { createStage, createLoop, text, createParticles, artImage } from "../core/stage.js";
+// Images du lot 9 (null si absentes : on garde le dessin).
+const picture = name => hasImage(`tir-etoiles/${name}`) ? artImage(`<img src="${imagePath(`tir-etoiles/${name}`)}">`) : null;
+const ready = img => img && img.complete && img.naturalWidth;
+const IMG = {
+  board: picture("fond-nuit.jpg"), star: picture("etoile.png"), gold: picture("etoile-doree.png"),
+  bumper: picture("champignon.png"), sling: picture("lance-pierre.png"),
+  balls: { Bleu: picture("bille-bleu.png"), Rouge: picture("bille-rouge.png"), Vert: picture("bille-vert.png"), Jaune: picture("bille-jaune.png") }
+};
+// Avec le plateau du lot, la bille rebondit sur le bord intérieur du cadre en bois.
+const FRAME = IMG.board ? 40 : 0;
 
 const W = 800, H = 1000, BALL = 12, LAUNCH = { x: 400, y: 935 }, GRAVITY = 520;
 const COLORS = { 1: "#70ECFF", 2: "#A5F29C", 3: "#FFA9E3", 5: "#FFC83D" };
@@ -92,9 +102,9 @@ function mount(root, ctx) {
     b.vy += GRAVITY * dt;
     b.x += b.vx * dt;
     b.y += b.vy * dt;
-    if (b.x < BALL) { b.x = BALL; b.vx = Math.abs(b.vx) * 0.92; if (effects) play("tap"); }
-    if (b.x > W - BALL) { b.x = W - BALL; b.vx = -Math.abs(b.vx) * 0.92; if (effects) play("tap"); }
-    if (b.y < BALL) { b.y = BALL; b.vy = Math.abs(b.vy) * 0.85; }
+    if (b.x < FRAME + BALL) { b.x = FRAME + BALL; b.vx = Math.abs(b.vx) * 0.92; if (effects) play("tap"); }
+    if (b.x > W - FRAME - BALL) { b.x = W - FRAME - BALL; b.vx = -Math.abs(b.vx) * 0.92; if (effects) play("tap"); }
+    if (b.y < FRAME + BALL) { b.y = FRAME + BALL; b.vy = Math.abs(b.vy) * 0.85; }
     for (const [x, y, r] of board.bumpers) {
       const dx = b.x - x, dy = b.y - y, d = Math.hypot(dx, dy), contact = r + BALL;
       if (d >= contact) continue;
@@ -228,13 +238,19 @@ function mount(root, ctx) {
 
   function draw() {
     stage.begin();
+    if (ready(IMG.board)) {
+      g.drawImage(IMG.board, 0, 0, W, H);
+      for (let i = 0; i < 30; i++) { g.fillStyle = "#F4D9AB44"; g.beginPath(); g.arc(60 + (i * 137 + 31) % (W - 120), 60 + (i * 71 + 19) % (H - 120), 2, 0, Math.PI * 2); g.fill(); }
+    } else {
     const sky = g.createLinearGradient(0, 0, 0, H);
     sky.addColorStop(0, "#251A57"); sky.addColorStop(1, "#6B3776");
     g.fillStyle = sky; g.fillRect(0, 0, W, H);
     for (let i = 0; i < 50; i++) { g.fillStyle = "#F4D9AB66"; g.beginPath(); g.arc((i * 137 + 31) % W, (i * 71 + 19) % H, 2, 0, Math.PI * 2); g.fill(); }
     g.fillStyle = "#8E78C9"; g.fillRect(0, 0, 6, H); g.fillRect(W - 6, 0, 6, H);
+    }
     const pl = current() || players[0];
     for (const [x, y, r] of board.bumpers) {
+      if (ready(IMG.bumper)) { const size = r * 2 * 512 / 402; g.drawImage(IMG.bumper, x - size / 2, y - size / 2, size, size); continue; }
       g.fillStyle = "#211A45"; g.beginPath(); g.arc(x, y + 4, r + 3, 0, Math.PI * 2); g.fill();
       g.fillStyle = "#9D74DD"; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
       g.fillStyle = "#523783"; g.beginPath(); g.arc(x, y, r * 0.66, 0, Math.PI * 2); g.fill();
@@ -242,11 +258,20 @@ function mount(root, ctx) {
     }
     for (const s of [...stars, gold]) {
       if (pl.picked.has(s.id)) continue;
+      const pic = s.value === 5 ? IMG.gold : IMG.star;
+      if (ready(pic)) {
+        // Plus l'étoile rapporte, plus elle est grande.
+        const size = s.value === 5 ? 104 : 54 + s.value * 8, bob = Math.sin(performance.now() / 300 + s.x) * 2;
+        g.drawImage(pic, s.x - size / 2, s.y - size / 2 + bob, size, size);
+        text(g, String(s.value), s.x, s.y + 6 + bob, { size: s.value === 5 ? 26 : 20, color: "#5A3A00" });
+      } else {
       drawStar(s.x, s.y, s.value === 5 ? 36 : 27, COLORS[s.value], s.value === 5);
       text(g, String(s.value), s.x, s.y + 2, { size: s.value === 5 ? 24 : 19, color: "#35214B" });
+      }
     }
     // Lanceur et visée
-    g.fillStyle = "#201942"; g.beginPath(); g.ellipse(LAUNCH.x, LAUNCH.y + 10, 60, 36, 0, 0, Math.PI * 2); g.fill();
+    if (ready(IMG.sling)) g.drawImage(IMG.sling, LAUNCH.x - 55, LAUNCH.y - 26, 110, 110);
+    else { g.fillStyle = "#201942"; g.beginPath(); g.ellipse(LAUNCH.x, LAUNCH.y + 10, 60, 36, 0, 0, Math.PI * 2); g.fill(); }
     if (phase === "aim" || phase === "banner") {
       if (aim && aim.power > 0.05) {
         const v = speedOf(aim.power);
@@ -260,14 +285,20 @@ function mount(root, ctx) {
         g.fillStyle = "#FFF1B588"; g.beginPath(); g.moveTo(70, 0); g.lineTo(46, -10); g.lineTo(46, 10); g.fill();
         g.restore();
       }
+      const bille = IMG.balls[pl.p.name];
+      if (ready(bille)) g.drawImage(bille, LAUNCH.x - 26, LAUNCH.y - 26, 52, 52);
+      else {
       g.fillStyle = pl.p.color; g.beginPath(); g.arc(LAUNCH.x, LAUNCH.y, 20, 0, Math.PI * 2); g.fill();
       g.fillStyle = "#FFF8E0"; g.beginPath(); g.arc(LAUNCH.x - 6, LAUNCH.y - 6, 5, 0, Math.PI * 2); g.fill();
+      }
       if (!aim && pl.p.kind === "human" && phase === "aim") text(g, "Tire en arrière", LAUNCH.x, LAUNCH.y - 80, { size: 30, color: "#fff", stroke: "#2A1F5E" });
     }
     if (ball) {
       ball.trail.forEach((p, i) => { g.globalAlpha = i / ball.trail.length * 0.5; g.fillStyle = pl.p.color; g.beginPath(); g.arc(p.x, p.y, 4 + i * 0.5, 0, Math.PI * 2); g.fill(); });
       g.globalAlpha = 1;
-      g.fillStyle = "#FFF4D9"; g.beginPath(); g.arc(ball.x, ball.y, BALL, 0, Math.PI * 2); g.fill();
+      const bille = IMG.balls[pl.p.name];
+      if (ready(bille)) { const size = BALL * 2 * 256 / 200; g.drawImage(bille, ball.x - size / 2, ball.y - size / 2, size, size); }
+      else { g.fillStyle = "#FFF4D9"; g.beginPath(); g.arc(ball.x, ball.y, BALL, 0, Math.PI * 2); g.fill(); }
     }
     particles.draw(g);
     // Scores
@@ -275,7 +306,7 @@ function mount(root, ctx) {
     g.fillStyle = "#ffffffe6"; g.beginPath(); g.roundRect(W / 2 - 300, 20, 600, 54, 27); g.fill();
     text(g, solo ? `Score : ${players[0].points}` : top, W / 2, 47, { size: players.length > 2 ? 22 : 28 });
     const balls = "●".repeat(Math.max(0, SHOTS - pl.shots)) + "○".repeat(Math.min(SHOTS, pl.shots));
-    text(g, balls, W / 2, H - 22, { size: 30, color: pl.p.color });
+    text(g, balls, FRAME ? 150 : W / 2, H - (FRAME ? 62 : 22), { size: 30, color: pl.p.color, stroke: FRAME ? "#fff" : null });
     if (message) text(g, message.text, W / 2, 480, { size: 70, color: "#FFDC6F", stroke: "#2A1F5E" });
   }
 
