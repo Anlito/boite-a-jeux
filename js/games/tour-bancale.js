@@ -1,10 +1,10 @@
 // La tour bancale : un étage se balance au bout de la grue ; on touche l'écran pour le lâcher.
 // Il doit tomber sur l'étage du dessous. Trop décalé : il tombe à côté. Et si la tour penche trop d'un côté,
 // elle s'écroule ! Seul : la tour la plus haute possible. À plusieurs : chacun son tour sur la même tour.
-import { SEATS, robotArt } from "../core/art.js";
+import { SEATS, robotArt, hasImage, imagePath } from "../core/art.js";
 import { play, say } from "../core/sound.js";
 import { h } from "../core/ui.js";
-import { createStage, createLoop, text, createParticles } from "../core/stage.js";
+import { createStage, createLoop, artImage, text, createParticles } from "../core/stage.js";
 
 const W = 1000, H = 1600;
 const BH = 92;                    // hauteur d'un étage
@@ -36,6 +36,21 @@ const ROBOT = { 1: { error: 55, miss: 0.18 }, 2: { error: 28, miss: 0.07 }, 3: {
 
 const between = (a, b) => a + Math.random() * (b - a);
 const pickOne = list => list[Math.floor(Math.random() * list.length)];
+const clamp01 = v => Math.max(0, Math.min(1, v));
+
+// Images du lot 18 (sinon : les dessins de secours plus bas).
+const pic = name => hasImage(`tour-bancale/${name}`) ? artImage(`<img src="${imagePath(`tour-bancale/${name}`)}">`) : null;
+const ready = image => !!(image && image.complete && image.naturalWidth);
+// Couleur d'un étage → image (à plusieurs, l'étage prend la couleur du joueur : on prend l'image la plus proche).
+const FLOOR_PIC = {
+  "#FF9AA8": "rose", "#FFD36B": "jaune", "#8FD6A7": "vert", "#8EC5FF": "bleu", "#C5A8FF": "violet", "#FFB27A": "orange",
+  "#2F80ED": "bleu", "#EB5757": "rose", "#27AE60": "vert", "#F2C94C": "jaune"
+};
+// Repères mesurés sur les images d'origine (768 × 256) : partie visible de l'étage, en hauteur et en largeur,
+// et les 4 tranches à fenêtre (144 px chacune), entre deux petits bords.
+const SRC = { w: 768, top: 25, h: 205, left: 76, cap: 20, cell: 144, cells: 4 };
+const VILLE_GROUND = 1736;        // ligne du sol dans fond-ville.jpg (1080 × 1920)
+const SKY_DAY = "#BBECFD";        // couleur du haut de fond-ville.jpg
 
 function mount(root, ctx) {
   const solo = ctx.count === 1;
@@ -48,6 +63,11 @@ function mount(root, ctx) {
   const banner = h(`<div class="cn-overlay"><div class="cn-banner" hidden><span class="cn-banner-art"></span><span class="cn-banner-text"></span></div></div>`);
   root.append(banner);
   const bannerBox = banner.querySelector(".cn-banner");
+  const pics = {
+    floors: Object.fromEntries([...new Set(Object.values(FLOOR_PIC))].map(name => [name, pic(`etage-${name}.png`)])),
+    base: pic("socle.png"), roof: pic("toit.png"), hook: pic("crochet.png"), crane: pic("grue.png"),
+    cloud: pic("nuage.png"), town: pic("fond-ville.jpg"), space: pic("fond-espace.jpg")
+  };
 
   // La tour : étages posés (x du centre, largeur, couleur, qui l'a posé). Le premier est le socle.
   const tower = [{ x: W / 2, w: 300, color: "#B8A6E8", seat: -1, base: true }];
@@ -247,7 +267,31 @@ function mount(root, ctx) {
 
   /* ---------- Dessin ---------- */
 
+  // Étage dessiné avec son image : les deux bords, puis autant de tranches à fenêtre que la largeur en demande
+  // (les fenêtres gardent leur forme, l'étage est seulement un peu plus ou moins large entre elles).
+  function drawFloorPic(image, w) {
+    const k = image.naturalWidth / SRC.w, s = BH / SRC.h;
+    const cap = SRC.cap * s, inner = w - cap * 2;
+    const n = Math.max(1, Math.round(inner / (SRC.cell * s)));
+    const cw = inner / n, sy = SRC.top * k, sh = SRC.h * k;
+    g.drawImage(image, SRC.left * k, sy, SRC.cap * k, sh, -w / 2, -BH / 2, cap + 0.5, BH);
+    for (let i = 0; i < n; i++) {
+      const sx = (SRC.left + SRC.cap + SRC.cell * (i % SRC.cells)) * k;
+      g.drawImage(image, sx, sy, SRC.cell * k, sh, -w / 2 + cap + i * cw - 0.3, -BH / 2, cw + 0.6, BH);
+    }
+    const right = SRC.left + SRC.cap + SRC.cell * SRC.cells;
+    g.drawImage(image, right * k, sy, SRC.cap * k, sh, w / 2 - cap - 0.5, -BH / 2, cap + 0.5, BH);
+  }
+
   function drawFloor(x, y, w, color, seat, rotation = 0) {
+    const image = pics.floors[FLOOR_PIC[color]];
+    if (ready(image)) {
+      g.save(); g.translate(x, y); if (rotation) g.rotate(rotation);
+      drawFloorPic(image, w);
+      if (seat >= 0 && !solo) { g.fillStyle = players[seat].p.color; g.strokeStyle = INK; g.lineWidth = 3; g.beginPath(); g.arc(w / 2 - 20, BH / 2 - 18, 9, 0, Math.PI * 2); g.fill(); g.stroke(); }
+      g.restore();
+      return;
+    }
     g.save(); g.translate(x, y); if (rotation) g.rotate(rotation);
     g.fillStyle = color; g.strokeStyle = INK; g.lineWidth = 5;
     g.beginPath(); g.roundRect(-w / 2, -BH / 2, w, BH, 14); g.fill(); g.stroke();
@@ -265,30 +309,66 @@ function mount(root, ctx) {
     g.restore();
   }
 
+  // Décor en images : la ville posée sur le sol, puis le soir, puis l'espace qui se répète en montant.
+  function drawBackdrop(night, groundY) {
+    g.fillStyle = SKY_DAY; g.fillRect(0, 0, W, H);
+    const scale = W / pics.town.naturalWidth, townH = pics.town.naturalHeight * scale;
+    const townTop = groundY - VILLE_GROUND * scale;
+    if (townTop < H) g.drawImage(pics.town, 0, townTop, W, townH);
+    const evening = clamp01(1 - Math.abs(night - 0.45) / 0.25);
+    if (evening > 0) {
+      const dusk = g.createLinearGradient(0, 0, 0, H);
+      dusk.addColorStop(0, "#7B61FF"); dusk.addColorStop(1, "#FFB27A");
+      g.globalAlpha = evening * 0.55; g.fillStyle = dusk; g.fillRect(0, 0, W, H); g.globalAlpha = 1;
+    }
+    const dark = clamp01((night - 0.4) / 0.35);
+    if (dark > 0 && ready(pics.space)) {
+      const spaceH = pics.space.naturalHeight * (W / pics.space.naturalWidth);
+      g.globalAlpha = dark;
+      for (let y = (camera * 0.3) % spaceH - spaceH; y < H; y += spaceH) g.drawImage(pics.space, 0, y, W, spaceH + 1);
+      g.globalAlpha = 1;
+    }
+  }
+
   function draw() {
     stage.begin();
     // Ciel qui change en montant : jour, soir, puis l'espace
     const hgt = height();
-    const sky = g.createLinearGradient(0, 0, 0, H);
     const night = Math.min(1, hgt / 25);
+    const groundY = GROUND + BH / 2 + camera;
+    const pictured = ready(pics.town);
+    if (pictured) drawBackdrop(night, groundY);
+    else drawSky(night, groundY);
+    drawScene(hgt);
+  }
+
+  // Ciel, nuages, ville et sol dessinés (sans les images).
+  function drawSky(night, groundY) {
+    const sky = g.createLinearGradient(0, 0, 0, H);
     sky.addColorStop(0, night > 0.6 ? "#2B2350" : night > 0.3 ? "#7B61FF" : "#8EC5FF");
     sky.addColorStop(1, night > 0.6 ? "#7B61FF" : night > 0.3 ? "#FFB27A" : "#E3F4FF");
     g.fillStyle = sky; g.fillRect(0, 0, W, H);
     if (night > 0.5) for (let k = 0; k < 40; k++) { g.fillStyle = "#ffffffaa"; g.beginPath(); g.arc((k * 197) % W, (k * 131) % (H * 0.7), 2.2, 0, Math.PI * 2); g.fill(); }
-    // Nuages qui descendent quand on monte
-    g.fillStyle = "#ffffffcc";
-    for (let k = 0; k < 6; k++) {
-      const y = ((k * 380 + camera * 0.5) % (H + 300)) - 150, x = (k * 331) % (W - 200) + 100;
-      for (const [dx, dy, r] of [[0, 0, 40], [38, -14, 32], [70, 4, 30]]) { g.beginPath(); g.arc(x + dx, y + dy, r, 0, Math.PI * 2); g.fill(); }
-    }
     // Sol et ville au loin
-    const groundY = GROUND + BH / 2 + camera;
     if (groundY < H + 40) {
       g.fillStyle = "#B8D7FF";
       for (let k = 0; k < 8; k++) { const bw = 90 + (k * 37) % 60, bh = 140 + (k * 53) % 160; g.fillRect(k * 130 - 10, groundY - bh, bw, bh); }
       g.fillStyle = "#8FC46E"; g.fillRect(0, groundY, W, H - groundY + 10);
       g.fillStyle = INK; g.fillRect(0, groundY - 3, W, 6);
     }
+  }
+
+  function drawScene(hgt) {
+    // Nuages qui descendent quand on monte (ils s'effacent dans l'espace)
+    const cloudy = ready(pics.cloud);
+    g.globalAlpha = cloudy ? 1 - clamp01((hgt / 25 - 0.5) / 0.3) * 0.85 : 1;
+    g.fillStyle = "#ffffffcc";
+    for (let k = 0; k < 6; k++) {
+      const y = ((k * 380 + camera * 0.5) % (H + 300)) - 150, x = (k * 331) % (W - 200) + 100;
+      if (cloudy) { const cw = 170 + (k % 3) * 30; g.drawImage(pics.cloud, x - 20, y - cw * 0.3, cw, cw / 2); continue; }
+      for (const [dx, dy, r] of [[0, 0, 40], [38, -14, 32], [70, 4, 30]]) { g.beginPath(); g.arc(x + dx, y + dy, r, 0, Math.PI * 2); g.fill(); }
+    }
+    g.globalAlpha = 1;
     // La tour (elle penche un peu quand elle est mal équilibrée)
     g.save();
     const baseY = GROUND + camera;
@@ -297,11 +377,21 @@ function mount(root, ctx) {
     tower.forEach((b, i) => {
       const y = baseY - i * BH;
       if (y < -BH || y > H + BH) return;
+      if (b.base && ready(pics.base)) {
+        const k = pics.base.naturalWidth / SRC.w;
+        g.drawImage(pics.base, SRC.left * k, SRC.top * k, (SRC.cap * 2 + SRC.cell * SRC.cells) * k, SRC.h * k, b.x - b.w / 2, y - BH / 2, b.w, BH);
+        return;
+      }
       if (b.base) { g.fillStyle = "#8C7BB8"; g.strokeStyle = INK; g.lineWidth = 5; g.beginPath(); g.roundRect(b.x - b.w / 2, y - BH / 2, b.w, BH, 10); g.fill(); g.stroke(); return; }
       drawFloor(b.x, y, b.w, b.color, b.seat);
     });
     // Toit sur le dernier étage
-    if (height() > 0) {
+    if (height() > 0 && ready(pics.roof)) {
+      // Le toit déborde de chaque côté, comme sur l'image (son bas fait toute la largeur, l'étage 616 px sur 768).
+      const top = topOf(), y = baseY - height() * BH - BH / 2;
+      const k = pics.roof.naturalWidth / SRC.w, rw = top.w * SRC.w / (SRC.cap * 2 + SRC.cell * SRC.cells), rh = rw * 206 / SRC.w;
+      g.drawImage(pics.roof, 0, 50 * k, SRC.w * k, 206 * k, top.x - rw / 2, y + 4 - rh, rw, rh);
+    } else if (height() > 0) {
       const top = topOf(), y = baseY - height() * BH - BH / 2;
       g.fillStyle = "#EB5757"; g.strokeStyle = INK; g.lineWidth = 5;
       g.beginPath(); g.moveTo(top.x - top.w / 2 - 6, y + 2); g.lineTo(top.x, y - 40); g.lineTo(top.x + top.w / 2 + 6, y + 2); g.closePath(); g.fill(); g.stroke();
@@ -311,14 +401,23 @@ function mount(root, ctx) {
     // Étages qui tombent
     for (const b of flying) drawFloor(b.x, b.y, b.w, b.color, -1, b.spin);
     // Grue et étage accroché
-    g.fillStyle = "#FFC83D"; g.strokeStyle = INK; g.lineWidth = 5;
-    g.beginPath(); g.roundRect(-20, 120, W + 40, 34, 10); g.fill(); g.stroke();
-    for (let x = 20; x < W; x += 60) { g.beginPath(); g.moveTo(x, 122); g.lineTo(x + 30, 152); g.stroke(); }
+    if (ready(pics.crane)) {
+      // Bras en treillis qui se répète ; sa partie visible (100 px sur 128) fait 40 de haut, centrée sur y = 137.
+      const th = 40 * 128 / 100, tw = th * pics.crane.naturalWidth / pics.crane.naturalHeight;
+      for (let x = -20; x < W; x += tw - 1) g.drawImage(pics.crane, x, 137 - th / 2, tw, th);
+    } else {
+      g.fillStyle = "#FFC83D"; g.strokeStyle = INK; g.lineWidth = 5;
+      g.beginPath(); g.roundRect(-20, 120, W + 40, 34, 10); g.fill(); g.stroke();
+      for (let x = 20; x < W; x += 60) { g.beginPath(); g.moveTo(x, 122); g.lineTo(x + 30, 152); g.stroke(); }
+    }
     if (phase === "swing" || phase === "banner") {
       const hx = hookX();
+      const hooked = ready(pics.hook);
+      // Le chariot roule sur le bras ; le câble part du bout du crochet.
       g.strokeStyle = INK; g.lineWidth = 4;
-      g.beginPath(); g.moveTo(hx, 154); g.lineTo(hx, HOOK_Y); g.stroke();
-      g.fillStyle = "#8C86A6"; g.beginPath(); g.roundRect(hx - 30, 140, 60, 26, 8); g.fill(); g.stroke();
+      g.beginPath(); g.moveTo(hx, hooked ? 200 : 154); g.lineTo(hx, HOOK_Y); g.stroke();
+      if (hooked) g.drawImage(pics.hook, hx - 60, 100, 120, 120);
+      else { g.fillStyle = "#8C86A6"; g.beginPath(); g.roundRect(hx - 30, 140, 60, 26, 8); g.fill(); g.stroke(); }
       if (current) drawFloor(hx, HOOK_Y + BH / 2, current.w, current.color, -1, Math.sin(swing) * 0.06);
       // Repère pour viser : une ligne pointillée sous l'étage
       g.strokeStyle = "#ffffff99"; g.setLineDash([10, 12]); g.lineWidth = 3;

@@ -12,7 +12,7 @@ Ce fichier sert à reprendre le travail dans une nouvelle conversation sans tout
 - Tout en français, vocabulaire simple, sans jargon.
 - Le README décrit l'organisation du code et l'interface d'un jeu (`mount`, `levels`, `finish`).
 
-## État actuel (version 0.28.0, fin novembre 2026)
+## État actuel (version 0.29.0, fin novembre 2026)
 
 17 jeux en ligne :
 
@@ -33,7 +33,7 @@ Ce fichier sert à reprendre le travail dans une nouvelle conversation sans tout
 | Petits bolides (course, joystick) | `petits-bolides.js` | lot 15 (la route reste dessinée par le jeu ; décor placé au hasard hors de la route) |
 | Palet glissant (1-2) | `palet-glissant.js` | vignette lot 17 ; lot 20 facultatif dans le brief |
 | Quatre à la suite (1-2) | `quatre-a-la-suite.js` | vignette lot 17 ; lot 20 facultatif dans le brief |
-| La tour bancale | `tour-bancale.js` | **lot 18 attendu** |
+| La tour bancale | `tour-bancale.js` | lot 18 (étages découpés en bords + tranches à fenêtre, ville puis soir puis espace) |
 | L'orchestre | `orchestre.js` | **lot 19 attendu** (remplace les emojis) |
 
 Lot 1 (mascotte, 12 avatars, 3 robots, icônes) et lot 2 (14 vignettes) intégrés.
@@ -42,7 +42,7 @@ Lots 16 et 17 (vignettes d'Œil de lynx, Paires cachées, Palet glissant et Quat
 ## Ce qu'attend ChatGPT
 
 Le brief complet est dans [docs/brief-visuels-lots-6-20.md](docs/brief-visuels-lots-6-20.md) (paragraphe de style à coller en tête de chaque demande, puis un lot par jeu). L'utilisateur l'a déjà transmis à ChatGPT.
-Lots 1 à 17 intégrés. Restent à recevoir : **lot 18** (La tour bancale), **lot 19** (L'orchestre), **lot 20** facultatif (crosses, palet, plot de Palet glissant ; jetons de Quatre à la suite).
+Lots 1 à 18 intégrés. Restent à recevoir : **lot 19** (L'orchestre), **lot 20** facultatif (crosses, palet, plot de Palet glissant ; jetons de Quatre à la suite).
 
 ## Jeux encore possibles (proposés, pas faits)
 
