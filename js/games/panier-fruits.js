@@ -6,9 +6,20 @@
 // Bonus : pomme dorée (+3), aimant, sablier, série de 5 (points doublés).
 import { play, say } from "../core/sound.js";
 import { h } from "../core/ui.js";
-import { createStage, createLoop, text, createParticles, seatAt } from "../core/stage.js";
+import { createStage, createLoop, text, createParticles, seatAt, artImage } from "../core/stage.js";
+import { hasImage, imagePath } from "../core/art.js";
 
 const W = 800, BASKET = 72, INK = "#3B2F5A";
+// Images du lot 6 (null si absentes : on garde le dessin).
+const picture = name => hasImage(`panier-fruits/${name}`) ? artImage(`<img src="${imagePath(`panier-fruits/${name}`)}">`) : null;
+const ready = img => img && img.complete && img.naturalWidth;
+const IMG = {
+  fond: picture("fond-verger.jpg"), etourdi: picture("etoiles-etourdi.png"), guepe: picture("guepe.png"),
+  pomme: picture("pomme.png"), poire: picture("poire.png"), fraise: picture("fraise.png"), orange: picture("orange.png"),
+  prune: picture("prune.png"), doree: picture("pomme-doree.png"), pourrie: picture("pomme-pourrie.png"),
+  bombe: picture("bombe.png"), bogue: picture("bogue.png"), aimant: picture("aimant.png"), sablier: picture("sablier.png")
+};
+const BASKETS = { Bleu: picture("panier-bleu.png"), Rouge: picture("panier-rouge.png"), Vert: picture("panier-vert.png"), Jaune: picture("panier-jaune.png") };
 const ITEMS = {
   pomme: { points: 1 }, poire: { points: 1 }, fraise: { points: 1 }, orange: { points: 1 }, prune: { points: 1 },
   doree: { points: 3 }, aimant: { power: "aimant" }, sablier: { power: "sablier" },
@@ -45,7 +56,7 @@ function mount(root, ctx) {
   const n = people.length;
   // Hauteur du verger selon la forme de la zone de chaque joueur (la même pour tous : c'est équitable).
   const zoneW = window.innerWidth / (n > 2 ? 2 : 1), zoneH = window.innerHeight / (n > 1 ? 2 : 1);
-  const H = Math.round(clamp(W * zoneH / zoneW, 380, 1100));
+  const H = Math.round(clamp(W * zoneH / zoneW, 380, 1800));
   const BASKET_Y = H - 110;
   const scale = H / 600;                                   // même temps de chute quelle que soit la hauteur
 
@@ -54,7 +65,7 @@ function mount(root, ctx) {
   const flipped = i => n > 1 && (i === 1 || i === 3);
   const fields = people.map((p, i) => {
     const zone = node.querySelector(`.pf-zone.pos-${i}`);
-    const stage = createStage(zone, { width: W, height: H, background: "#FCE3C4", flipped: flipped(i) });
+    const stage = createStage(zone, { width: W, height: H, background: ready(IMG.fond) || hasImage("panier-fruits/fond-verger.jpg") ? "#FEF6E9" : "#FCE3C4", flipped: flipped(i) });
     if (flipped(i)) stage.canvas.style.transform = "rotate(180deg)";
     return { seat: i, p, zone, stage, g: stage.ctx, particles: createParticles(), x: W / 2, target: W / 2, score: 0, streak: 0, items: [], wasps: [], magnet: 0, slow: 0, stun: 0, tilt: 0, flash: null, ai: { wait: 0 } };
   });
@@ -253,6 +264,17 @@ function mount(root, ctx) {
   function blob(g, x, y, rx, ry, color, line = 4) { g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); g.fillStyle = color; g.fill(); if (line) outline(g, line); }
 
   function drawScene(g) {
+    if (ready(IMG.fond)) {
+      const img = IMG.fond, k = W / img.naturalWidth;
+      const topSrc = img.naturalHeight * 0.23, bottomSrc = img.naturalHeight * 0.2;
+      // Si le verger est bas, on rogne le haut des branches et le bas de l'herbe.
+      const fit = Math.min(1, (H * 0.5) / ((topSrc + bottomSrc) * k));
+      g.fillStyle = "#FEF6E9"; g.fillRect(0, 0, W, H);
+      const th = topSrc * fit, bh = bottomSrc * fit;
+      g.drawImage(img, 0, topSrc - th, img.naturalWidth, th, 0, 0, W, th * k);
+      g.drawImage(img, 0, img.naturalHeight - bottomSrc, img.naturalWidth, bh, 0, H - bh * k, W, bh * k);
+      return;
+    }
     const sky = g.createLinearGradient(0, 0, 0, H);
     sky.addColorStop(0, "#CDEBFF"); sky.addColorStop(0.55, "#FFF1D6"); sky.addColorStop(1, "#FCE3C4");
     g.fillStyle = sky; g.fillRect(0, 0, W, H);
@@ -282,6 +304,17 @@ function mount(root, ctx) {
   }
 
   function drawItem(g, it) {
+    const img = IMG[it.kind];
+    if (ready(img)) {
+      g.save();
+      g.translate(it.x, it.y);
+      if (it.kind === "bogue") g.rotate(it.spin);
+      if (it.kind === "aimant") g.rotate(Math.sin(it.spin) * 0.3);
+      const size = it.kind === "doree" ? 136 : 120;
+      g.drawImage(img, -size / 2, -size / 2, size, size);
+      g.restore();
+      return;
+    }
     g.save();
     g.translate(it.x, it.y);
     const r = 24;
@@ -355,6 +388,12 @@ function mount(root, ctx) {
     g.save();
     g.translate(w.x, y);
     if (w.vx < 0) g.scale(-1, 1);
+    if (ready(IMG.guepe)) {
+      g.rotate(Math.sin(w.t * 12) * 0.08);
+      g.drawImage(IMG.guepe, -70, -70, 140, 140);
+      g.restore();
+      return;
+    }
     const flap = Math.sin(w.t * 40) * 0.4;
     g.beginPath(); g.ellipse(-4, -16, 10, 16, -0.6 + flap, 0, Math.PI * 2); g.ellipse(8, -16, 10, 16, 0.4 - flap, 0, Math.PI * 2);
     g.fillStyle = "#ffffffcc"; g.fill(); outline(g, 2);
@@ -373,6 +412,18 @@ function mount(root, ctx) {
     g.rotate(clamp(f.tilt, -0.18, 0.18));
     if (f.magnet > 0) { g.strokeStyle = "#7B61FF66"; g.lineWidth = 6; g.beginPath(); g.arc(0, 0, 110 + Math.sin(clock * 10) * 6, Math.PI, 0); g.stroke(); }
     g.fillStyle = "#3B2F5A22"; g.beginPath(); g.ellipse(0, 62, half, 10, 0, 0, Math.PI * 2); g.fill();
+    const basket = BASKETS[f.p.name];
+    if (ready(basket)) {
+      // Panier du lot 6 : le bord visible (x 69 à 429, haut à 171 sur 512) couvre la zone d'attrape.
+      const sc = (half * 2.2) / 360;   // pixels affichés par unité de l'image d'origine (512)
+      g.drawImage(basket, -249 * sc, -6 - 171 * sc, 512 * sc, 512 * sc);
+      if (f.stun > 0) {
+        if (ready(IMG.etourdi)) { g.save(); g.translate(0, -42); g.rotate(Math.sin(clock * 8) * 0.25); g.drawImage(IMG.etourdi, -70, -70, 140, 140); g.restore(); }
+        else for (let k2 = 0; k2 < 3; k2++) { const a = clock * 6 + k2 * 2.1; text(g, "★", Math.cos(a) * 40, -28 + Math.sin(a) * 8, { size: 22, color: "#FFC83D" }); }
+      }
+      g.restore();
+      return;
+    }
     // Corps tressé
     g.beginPath(); g.moveTo(-half, 4); g.lineTo(half, 4); g.lineTo(half * 0.82, 56); g.quadraticCurveTo(0, 64, -half * 0.82, 56); g.closePath();
     g.fillStyle = "#D9A15E"; g.fill();
@@ -398,10 +449,10 @@ function mount(root, ctx) {
     drawBasket(f);
     f.particles.draw(g);
     // Repères : score, série, temps
-    g.beginPath(); g.roundRect(16, 14, 190, 58, 29); g.fillStyle = "#ffffffee"; g.fill(); outline(g, 3);
-    blob(g, 46, 43, 14, 14, f.p.color, 2.5);
-    text(g, `${f.score}`, 100, 44, { size: 36, color: f.p.deep });
-    if (f.streak >= 5) text(g, "×2", 168, 44, { size: 28, color: "#E59A00" });
+    g.beginPath(); g.roundRect(96, 14, 190, 58, 29); g.fillStyle = "#ffffffee"; g.fill(); outline(g, 3);
+    blob(g, 126, 43, 14, 14, f.p.color, 2.5);
+    text(g, `${f.score}`, 180, 44, { size: 36, color: f.p.deep });
+    if (f.streak >= 5) text(g, "×2", 248, 44, { size: 28, color: "#E59A00" });
     g.beginPath(); g.roundRect(W - 140, 14, 124, 58, 29); g.fillStyle = "#ffffffee"; g.fill(); outline(g, 3);
     const left = Math.max(0, Math.ceil(setup.time - clock));
     text(g, `${left} s`, W - 78, 44, { size: 32, color: left <= 5 ? "#C62F2F" : INK });

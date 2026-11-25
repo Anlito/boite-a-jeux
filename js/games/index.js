@@ -12,7 +12,9 @@ import calculEclair from "./calcul-eclair.js";
 import oeilDeLynx from "./oeil-de-lynx.js";
 import pairesCachees from "./paires-cachees.js";
 import petitsBolides from "./petits-bolides.js";
+import paletGlissant from "./palet-glissant.js";
+import quatreALaSuite from "./quatre-a-la-suite.js";
 
-export const GAMES = [topDepart, sumoBulles, lesCanons, astroBalles, courseGrenouilles, panierFruits, tirEtoiles, serpentins, patateChaude, calculEclair, oeilDeLynx, pairesCachees, petitsBolides];
+export const GAMES = [topDepart, sumoBulles, lesCanons, astroBalles, courseGrenouilles, panierFruits, tirEtoiles, serpentins, patateChaude, calculEclair, oeilDeLynx, pairesCachees, petitsBolides, paletGlissant, quatreALaSuite];
 
 export const gameById = id => GAMES.find(game => game.id === id);

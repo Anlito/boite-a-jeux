@@ -20,6 +20,8 @@ Application web installable, sans compte, sans publicité, qui fonctionne hors l
 | Œil de lynx | 1 à 4, robots (trouver le dessin commun entre deux cartes) | Jouable |
 | Paires cachées | 1 à 4, robots, chacun son tour (jeu de mémoire) | Jouable |
 | Petits bolides | 1 à 4, robots (course sur 10 circuits, joystick) | Jouable |
+| Palet glissant | 1 à 2, robot (hockey sur table, face à face) | Jouable |
+| Quatre à la suite | 1 à 2, robot, chacun son tour (aligner 4 jetons) | Jouable |
 
 En solo, chaque jeu a 10 niveaux dessinés à la main (une étoile débloque le suivant) puis un défi libre, ouvert après le niveau 5.
 
@@ -56,7 +58,7 @@ export default {
 
 ## Visuels
 
-Les images viennent du brief donné à ChatGPT (voir le cahier des charges). Lots 1 à 5 intégrés (lot 3 : Top départ ; lot 5 : ciel, châteaux intacts et abîmés, canon, boulet, explosion et drapeau du vent des Canons — le fond « colline » n’est pas utilisé, car le terrain change à chaque partie et se creuse sous les tirs ; lot 4 : océan, banquise, phoque, bouclier et éclaboussure de Sumo-bulles — les bulles à animal imposé ne sont pas utilisées, le jeu montre l’avatar choisi) : mascotte, 12 avatars, 3 robots, icônes, décors, effets ; 14 vignettes de jeux (JPG 640 × 480).
+Les images viennent du brief donné à ChatGPT (voir le cahier des charges). Lots 1 à 6 intégrés (lot 6 : verger, paniers aux 4 couleurs, fruits, pièges et bonus de Panier de fruits ; lot 3 : Top départ ; lot 5 : ciel, châteaux intacts et abîmés, canon, boulet, explosion et drapeau du vent des Canons — le fond « colline » n’est pas utilisé, car le terrain change à chaque partie et se creuse sous les tirs ; lot 4 : océan, banquise, phoque, bouclier et éclaboussure de Sumo-bulles — les bulles à animal imposé ne sont pas utilisées, le jeu montre l’avatar choisi) : mascotte, 12 avatars, 3 robots, icônes, décors, effets ; 14 vignettes de jeux (JPG 640 × 480).
 
 Pour ajouter un lot : réduire les images à la taille affichée (personnages 512 px, icônes 128 px, effets 256 px, décors en JPG 1600 px), les placer dans `assets/` avec les noms du brief, puis les ajouter à `js/core/images-list.js`. Elles remplacent alors le dessin vectoriel de même nom et sont gardées pour le hors-ligne. Les icônes livrées sont violettes : elles ne servent que sur fond clair, les boutons colorés gardent les icônes vectorielles blanches.
 
