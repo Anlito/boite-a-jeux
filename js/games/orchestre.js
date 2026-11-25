@@ -4,6 +4,7 @@
 import { play, say, music } from "../core/sound.js";
 import { h } from "../core/ui.js";
 import { createLoop } from "../core/stage.js";
+import { hasImage, imagePath } from "../core/art.js";
 
 // Les instruments : couleur, dessin, note (gamme pentatonique : toutes les notes vont bien ensemble), timbre.
 const INSTRUMENTS = [
@@ -35,6 +36,15 @@ const MULTI = { pads: 4, tempo: 0.6 };
 // Robot : chance de bien se souvenir de chaque note (baisse un peu quand la suite s'allonge).
 const ROBOT = { 1: 0.9, 2: 0.95, 3: 0.985 };
 
+// Images du lot 19 : instruments (sinon les emojis), note qui s'envole, scène de théâtre.
+const PICTURED = INSTRUMENTS.every(I => hasImage(`orchestre/${I.name}.png`));
+const art = I => PICTURED
+  ? `<img src="${imagePath(`orchestre/${I.name}.png`)}" alt="" draggable="false">`
+  : `<span>${I.emoji}</span>`;
+const NOTE = hasImage("orchestre/note.png") ? imagePath("orchestre/note.png") : null;
+// Adresse complète : dans une variable CSS, un chemin relatif serait lu depuis le dossier css/.
+const SCENE = hasImage("orchestre/fond-scene.jpg") ? new URL(imagePath("orchestre/fond-scene.jpg"), document.baseURI).href : null;
+
 const pickOne = list => list[Math.floor(Math.random() * list.length)];
 const shuffle = list => list.map(v => [Math.random(), v]).sort((a, b) => a[0] - b[0]).map(p => p[1]);
 
@@ -45,7 +55,7 @@ function mount(root, ctx) {
   const players = ctx.seats.map((p, i) => ({ seat: i, p, lives: LIVES, out: false, best: 0 }));
   let order = INSTRUMENTS.slice(0, rules.pads).map((_, i) => i);   // instrument posé sur chaque place
 
-  const node = h(`<div class="or n${rules.pads}">
+  const node = h(`<div class="or n${rules.pads}${PICTURED ? " pictured" : ""}"${SCENE ? ` style="--scene:url('${SCENE}')"` : ""}>
     <div class="or-top"><div class="or-players">${players.map(pl => `<span class="or-player" data-seat="${pl.seat}" style="--seat:${pl.p.color};--seat-deep:${pl.p.deep}">
       <span class="or-avatar">${pl.p.art}</span><span class="or-name">${pl.p.label}</span><span class="or-hearts"></span></span>`).join("")}</div></div>
     <div class="or-stage">
@@ -65,7 +75,7 @@ function mount(root, ctx) {
     const n = rules.pads;
     ring.innerHTML = order.map((ins, place) => {
       const a = -Math.PI / 2 + place * Math.PI * 2 / n, I = INSTRUMENTS[ins];
-      return `<button class="or-pad" data-ins="${ins}" style="--x:${(50 + Math.cos(a) * 36).toFixed(1)}%;--y:${(50 + Math.sin(a) * 36).toFixed(1)}%;--c:${I.color};--d:${I.deep}" aria-label="${I.name}"><span>${I.emoji}</span></button>`;
+      return `<button class="or-pad" data-ins="${ins}" style="--x:${(50 + Math.cos(a) * 36).toFixed(1)}%;--y:${(50 + Math.sin(a) * 36).toFixed(1)}%;--c:${I.color};--d:${I.deep}" aria-label="${I.name}">${art(I)}</button>`;
     }).join("");
   }
   const padOf = ins => ring.querySelector(`.or-pad[data-ins="${ins}"]`);
@@ -86,6 +96,12 @@ function mount(root, ctx) {
     pad.classList.remove("lit"); void pad.offsetWidth; pad.classList.add("lit");
     setTimeout(() => pad.classList.remove("lit"), long ? 420 : 260);
     music(I.freq, long ? 0.45 : 0.3, I.type);
+    // Une note s'envole de l'instrument qui joue.
+    if (NOTE) {
+      const note = h(`<img class="or-note" src="${NOTE}" alt="" draggable="false" style="--x:${pad.style.getPropertyValue("--x")};--y:${pad.style.getPropertyValue("--y")};--drift:${(Math.random() * 2 - 1).toFixed(2)}">`);
+      ring.append(note);
+      setTimeout(() => note.remove(), 1000);
+    }
   }
 
   function setSay(text) { sayBox.textContent = text; }
@@ -248,7 +264,7 @@ function mount(root, ctx) {
 }
 
 function demo() {
-  const node = h(`<div class="or-demo">${INSTRUMENTS.slice(0, 4).map((I, k) => `<span style="--c:${I.color};--k:${k}">${I.emoji}</span>`).join("")}</div>`);
+  const node = h(`<div class="or-demo${PICTURED ? " pictured" : ""}">${INSTRUMENTS.slice(0, 4).map((I, k) => `<span style="--c:${I.color};--k:${k}">${PICTURED ? art(I) : I.emoji}</span>`).join("")}</div>`);
   return { node, stop() {} };
 }
 

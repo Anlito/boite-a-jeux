@@ -1142,11 +1142,23 @@ h1, h2, h3, h4, p { margin: 0; }
 .or-pad.lit { filter: none; transform: scale(1.14); box-shadow: 0 0 0 8px #fff, 0 0 40px 12px var(--c), 0 6px 0 var(--d); }
 .or-pad:active { transform: translateY(5px); box-shadow: 0 3px 0 var(--d); }
 .or-ring.listening .or-pad { cursor: default; }
+/* Avec les images du lot 19 : scène de théâtre, boutons clairs cerclés de la couleur de l'instrument,
+   qui se teintent quand il joue (un instrument rouge sur un bouton rouge ne se verrait pas). */
+.or.pictured { background: var(--scene, none) center bottom / cover no-repeat, radial-gradient(circle at 50% 55%, #FFF6E2, #FFD9A8); }
+.or.pictured .or-pad { background: radial-gradient(circle, #fff 55%, color-mix(in srgb, var(--c) 22%, #fff) 70%); box-shadow: 0 8px 0 var(--d), inset 0 0 0 7px var(--c); filter: none; }
+.or.pictured .or-pad img { width: 78%; pointer-events: none; filter: drop-shadow(0 3px 0 #2B235022); }
+.or.pictured .or-pad.lit { background: color-mix(in srgb, var(--c) 45%, #fff); box-shadow: 0 0 0 8px #fff, inset 0 0 0 7px var(--c), 0 0 40px 12px var(--c), 0 6px 0 var(--d); }
+.or.pictured .or-pad:active { box-shadow: inset 0 0 0 7px var(--c), 0 3px 0 var(--d); }
+.or.pictured .or-center { padding: 10px 18px; border-radius: 24px; background: #ffffffd9; box-shadow: 0 4px 0 #0000001a; }
+.or-note { position: absolute; left: var(--x); top: var(--y); width: 11%; translate: -50% -50%; pointer-events: none; z-index: 2; filter: drop-shadow(0 2px 2px #2B235044); animation: or-note 1s ease-out forwards; }
+@keyframes or-note { from { opacity: 0; transform: translate(0, 0) scale(.6); } 15% { opacity: 1; } to { opacity: 0; transform: translate(calc(var(--drift) * 40%), -170%) scale(1) rotate(calc(var(--drift) * 25deg)); } }
 .or-center { position: absolute; left: 50%; top: 50%; translate: -50% -50%; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; pointer-events: none; max-width: 40cqmin; }
 .or-count { font-size: min(7cqmin, 40px); font-weight: 700; color: var(--ink); }
 .or-say { font-size: min(4.2cqmin, 22px); font-weight: 600; color: #8A4A00; }
 .or-demo { display: flex; gap: 12px; }
 .or-demo span { display: grid; place-items: center; width: 60px; height: 60px; border-radius: 50%; background: var(--c); font-size: 1.8rem; animation: or-demo 2.4s infinite; animation-delay: calc(var(--k) * .5s); filter: saturate(.75) brightness(.92); }
+.or-demo.pictured span { background: #fff; box-shadow: inset 0 0 0 4px var(--c); filter: none; }
+.or-demo.pictured img { width: 76%; }
 @keyframes or-demo { 0%, 18% { transform: scale(1.15); filter: none; box-shadow: 0 0 0 5px #fff; } 25%, 100% { transform: none; } }
 
 /* ---------- La tour bancale ---------- */
