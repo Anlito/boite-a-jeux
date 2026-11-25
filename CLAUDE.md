@@ -12,7 +12,7 @@ Ce fichier sert à reprendre le travail dans une nouvelle conversation sans tout
 - Tout en français, vocabulaire simple, sans jargon.
 - Le README décrit l'organisation du code et l'interface d'un jeu (`mount`, `levels`, `finish`).
 
-## État actuel (version 0.30.0, fin novembre 2026)
+## État actuel (version 0.31.0, fin novembre 2026)
 
 17 jeux en ligne :
 
@@ -31,8 +31,8 @@ Ce fichier sert à reprendre le travail dans une nouvelle conversation sans tout
 | Œil de lynx (principe du Dobble) | `oeil-de-lynx.js` | lot 13 (pictos partagés, `js/core/pictos.js`) |
 | Paires cachées (mémoire) | `paires-cachees.js` | lots 13 et 14 (cartes, tapis, 8 couples d'animaux presque pareils pour le thème « pareils ») |
 | Petits bolides (course, joystick) | `petits-bolides.js` | lot 15 (la route reste dessinée par le jeu ; décor placé au hasard hors de la route) |
-| Palet glissant (1-2) | `palet-glissant.js` | vignette lot 17 ; lot 20 facultatif dans le brief |
-| Quatre à la suite (1-2) | `quatre-a-la-suite.js` | vignette lot 17 ; lot 20 facultatif dans le brief |
+| Palet glissant (1-2) | `palet-glissant.js` | vignette lot 17 ; lot 20 (bleu et rouge en image, autres couleurs dessinées) |
+| Quatre à la suite (1-2) | `quatre-a-la-suite.js` | vignette lot 17 ; lot 20 (bleu et rouge en image, autres couleurs dessinées) |
 | La tour bancale | `tour-bancale.js` | lot 18 (étages découpés en bords + tranches à fenêtre, ville puis soir puis espace) |
 | L'orchestre | `orchestre.js` | lot 19 (instruments à la place des emojis, boutons clairs cerclés de couleur, note qui s’envole, scène) |
 
@@ -42,7 +42,7 @@ Lots 16 et 17 (vignettes d'Œil de lynx, Paires cachées, Palet glissant et Quat
 ## Ce qu'attend ChatGPT
 
 Le brief complet est dans [docs/brief-visuels-lots-6-20.md](docs/brief-visuels-lots-6-20.md) (paragraphe de style à coller en tête de chaque demande, puis un lot par jeu). L'utilisateur l'a déjà transmis à ChatGPT.
-Lots 1 à 19 intégrés. Reste à recevoir : **lot 20**, facultatif (crosses, palet, plot de Palet glissant ; jetons de Quatre à la suite).
+Tous les lots du brief (1 à 20) sont intégrés. Prochains visuels possibles : scènes de Cherche et trouve, quand le jeu sera fait.
 
 ## Jeux encore possibles (proposés, pas faits)
 

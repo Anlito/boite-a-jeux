@@ -1,10 +1,17 @@
 // Quatre à la suite : chacun son tour, on lâche un jeton en haut d'une colonne ; il tombe tout en bas.
 // Le premier qui aligne quatre jetons (debout, couché ou en biais) gagne la manche.
 // Seul contre un robot qui réfléchit plus ou moins loin, ou à deux.
-import { SEATS, robotArt } from "../core/art.js";
+import { SEATS, robotArt, hasImage, imagePath } from "../core/art.js";
 import { play, say } from "../core/sound.js";
 import { h } from "../core/ui.js";
 import { createLoop } from "../core/stage.js";
+
+// Jetons du lot 20 pour le bleu et le rouge (une autre couleur de joueur garde le jeton dessiné).
+const CHIP_PIC = { "#2F80ED": "jeton-bleu.png", "#EB5757": "jeton-rouge.png" };
+const chipLook = color => {
+  const name = CHIP_PIC[color];
+  return name && hasImage(`quatre-a-la-suite/${name}`) ? { cls: " pictured", style: `background-image:url('${imagePath(`quatre-a-la-suite/${name}`)}');` } : { cls: "", style: "" };
+};
 
 const MULTI_GOAL = 2;            // manches gagnées pour remporter la partie à deux
 const SOLO_GAMES = 3;            // parties par niveau solo
@@ -125,7 +132,7 @@ function mount(root, ctx) {
 
   const node = h(`<div class="q4">
     ${players.map((p, i) => `<div class="q4-player p${i}" style="--seat:${p.color};--seat-deep:${p.deep};--seat-soft:${p.soft}">
-      <span class="q4-avatar">${p.art}</span><span class="q4-name">${p.label}</span><span class="q4-token"></span><span class="q4-wins"></span></div>`).join("")}
+      <span class="q4-avatar">${p.art}</span><span class="q4-name">${p.label}</span><span class="q4-token${chipLook(p.color).cls}" style="${chipLook(p.color).style}"></span><span class="q4-wins"></span></div>`).join("")}
     <div class="q4-board" style="--cols:${cols};--rows:${rows}">
       <div class="q4-drops"></div>
       <div class="q4-grid">${Array.from({ length: rows * cols }, (_, k) => `<span class="q4-hole" data-c="${k % cols}"></span>`).join("")}</div>
@@ -167,7 +174,8 @@ function mount(root, ctx) {
     if (r < 0) { play("wrong"); return; }
     grid[r][c] = turn;
     phase = "falling";
-    const token = h(`<span class="q4-chip" style="--seat:${players[turn].color};--seat-deep:${players[turn].deep};--c:${c};--r:${r}"></span>`);
+    const look = chipLook(players[turn].color);
+    const token = h(`<span class="q4-chip${look.cls}" style="--seat:${players[turn].color};--seat-deep:${players[turn].deep};--c:${c};--r:${r};${look.style}"></span>`);
     drops.append(token);
     void token.offsetWidth;   // position de départ prise en compte avant la chute
     token.classList.add("down");

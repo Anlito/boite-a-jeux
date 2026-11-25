@@ -1,7 +1,7 @@
 // Palet glissant : une table de hockey sur coussin d'air. Chacun déplace sa crosse au doigt dans sa moitié
 // et tente d'envoyer le palet dans le but d'en face. Seul contre un robot, ou à deux face à face.
 // La table se met en long dans le sens de l'écran (debout : buts en haut et en bas ; couché : à gauche et à droite).
-import { SEATS, robotArt } from "../core/art.js";
+import { SEATS, robotArt, hasImage, imagePath } from "../core/art.js";
 import { play, say } from "../core/sound.js";
 import { createStage, createLoop, artImage, text, createParticles } from "../core/stage.js";
 import { h } from "../core/ui.js";
@@ -11,6 +11,14 @@ const MALLET = 72, PUCK = 44;
 const WALL = 34;
 const FRICTION = 0.35, MAX = 2300, MALLET_MAX = 2800;
 const INK = "#2B2350";
+
+// Images du lot 20 (sinon les dessins de secours plus bas). Toutes vues du dessus ; la partie visible
+// fait 202 px sur 256 (marge de 10 %) : on agrandit d'autant pour que le disque garde la taille du jeu.
+const pic = name => hasImage(`palet-glissant/${name}`) ? artImage(`<img src="${imagePath(`palet-glissant/${name}`)}">`) : null;
+const ready = image => !!(image && image.complete && image.naturalWidth);
+const FILL = 256 / 202;
+// Crosse en image pour le bleu et le rouge ; une autre couleur de joueur garde la crosse dessinée.
+const MALLET_PIC = { "#2F80ED": "crosse-bleu.png", "#EB5757": "crosse-rouge.png" };
 
 // Niveaux solo : force du robot, buts pour gagner, largeur des buts, plots au milieu, deux palets.
 const LEVELS = [
@@ -51,6 +59,10 @@ function mount(root, ctx) {
   const stage = createStage(root, { width: flat ? TL : TW, height: flat ? TW : TL, background: "#1F2D5C" });
   const g = stage.ctx;
   const particles = createParticles();
+  const pics = {
+    puck: pic("palet.png"), bumper: pic("plot.png"),
+    mallets: Object.fromEntries(Object.entries(MALLET_PIC).map(([color, name]) => [color, pic(name)]))
+  };
   const toTable = (x, y) => flat ? { x: TW - y, y: x } : { x, y };
 
   const bumpers = setup.bumpers === 1 ? [{ x: TW / 2, y: TL / 2, r: 60 }]
@@ -295,12 +307,21 @@ function mount(root, ctx) {
   function drawMallet(m) {
     g.fillStyle = "#00000030";
     g.beginPath(); g.ellipse(m.x + 6, m.y + 10, m.r, m.r * 0.9, 0, 0, Math.PI * 2); g.fill();
-    g.fillStyle = m.p.color; g.strokeStyle = INK; g.lineWidth = 6;
-    g.beginPath(); g.arc(m.x, m.y, m.r, 0, Math.PI * 2); g.fill(); g.stroke();
-    g.fillStyle = m.p.deep;
-    g.beginPath(); g.arc(m.x, m.y, m.r * 0.66, 0, Math.PI * 2); g.fill();
-    g.fillStyle = "#fff";
-    g.beginPath(); g.arc(m.x, m.y, m.r * 0.5, 0, Math.PI * 2); g.fill();
+    const body = pics.mallets[m.p.color];
+    if (ready(body)) {
+      // Crosse en image ; l'avatar se pose sur la poignée, dans un rond blanc cerclé.
+      const s = m.r * 2 * FILL;
+      g.drawImage(body, m.x - s / 2, m.y - s / 2, s, s);
+      g.fillStyle = "#fff"; g.strokeStyle = INK; g.lineWidth = 4;
+      g.beginPath(); g.arc(m.x, m.y, m.r * 0.5, 0, Math.PI * 2); g.fill(); g.stroke();
+    } else {
+      g.fillStyle = m.p.color; g.strokeStyle = INK; g.lineWidth = 6;
+      g.beginPath(); g.arc(m.x, m.y, m.r, 0, Math.PI * 2); g.fill(); g.stroke();
+      g.fillStyle = m.p.deep;
+      g.beginPath(); g.arc(m.x, m.y, m.r * 0.66, 0, Math.PI * 2); g.fill();
+      g.fillStyle = "#fff";
+      g.beginPath(); g.arc(m.x, m.y, m.r * 0.5, 0, Math.PI * 2); g.fill();
+    }
     if (m.image.complete && m.image.naturalWidth) {
       g.save(); g.translate(m.x, m.y); if (m.seat === 1 && !solo) g.rotate(Math.PI);
       g.beginPath(); g.arc(0, 0, m.r * 0.48, 0, Math.PI * 2); g.clip();
@@ -311,6 +332,7 @@ function mount(root, ctx) {
   function drawPuck(p) {
     p.trail.forEach((q, k) => { g.globalAlpha = k / p.trail.length * 0.25; g.fillStyle = INK; g.beginPath(); g.arc(q.x, q.y, PUCK * 0.8, 0, Math.PI * 2); g.fill(); });
     g.globalAlpha = 1;
+    if (ready(pics.puck)) { const s = PUCK * 2 * FILL; g.drawImage(pics.puck, p.x - s / 2, p.y - s / 2, s, s); return; }
     g.fillStyle = INK; g.beginPath(); g.arc(p.x, p.y, PUCK, 0, Math.PI * 2); g.fill();
     g.fillStyle = "#FFC83D"; g.beginPath(); g.arc(p.x, p.y, PUCK * 0.55, 0, Math.PI * 2); g.fill();
     g.fillStyle = "#ffffffaa"; g.beginPath(); g.arc(p.x - PUCK * 0.3, p.y - PUCK * 0.3, PUCK * 0.18, 0, Math.PI * 2); g.fill();
@@ -322,6 +344,7 @@ function mount(root, ctx) {
     if (flat) { g.translate(0, TW); g.rotate(-Math.PI / 2); }
     drawTable();
     for (const b of bumpers) {
+      if (ready(pics.bumper)) { const s = b.r * 2 * FILL; g.drawImage(pics.bumper, b.x - s / 2, b.y - s / 2, s, s); continue; }
       g.fillStyle = "#FF9AA8"; g.strokeStyle = INK; g.lineWidth = 6;
       g.beginPath(); g.arc(b.x, b.y, b.r, 0, Math.PI * 2); g.fill(); g.stroke();
       g.fillStyle = "#ffffffaa"; g.beginPath(); g.arc(b.x - b.r * 0.3, b.y - b.r * 0.3, b.r * 0.25, 0, Math.PI * 2); g.fill();
