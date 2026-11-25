@@ -2,6 +2,7 @@
 // qui compte jusqu'à 10 au CE2). On touche la bonne réponse parmi quatre ; le plus rapide marque.
 // En solo : des séries de calculs contre la montre.
 // Les calculs restent simples : additions, soustractions, tables de 2 et de 3.
+import { hasImage, imagePath } from "../core/art.js";
 import { play, say } from "../core/sound.js";
 import { h } from "../core/ui.js";
 import { createLoop } from "../core/stage.js";
@@ -42,6 +43,15 @@ const between = (a, b) => a + Math.random() * (b - a);
 const pickOne = list => list[Math.floor(Math.random() * list.length)];
 const shuffle = list => list.map(v => [Math.random(), v]).sort((a, b) => a[0] - b[0]).map(p => p[1]);
 const fr = n => String(n);
+
+// Images du lot 12 (si absentes : le jeu garde son allure sans image).
+// L'ardoise passe par une variable CSS : son adresse doit être complète, sinon elle serait lue depuis css/.
+const pic = name => hasImage(`calcul-eclair/${name}`) ? imagePath(`calcul-eclair/${name}`) : null;
+const SLATE = pic("ardoise.png");
+const CHRONO = pic("chrono.png");
+const FLAME = pic("flamme-serie.png");
+const FLASH_PICS = { bravo: pic("bravo.png"), rate: pic("rate.png"), eclair: pic("eclair.png"), serie: FLAME };
+const img = (src, cls = "") => src ? `<img class="${cls}" src="${src}" alt="" draggable="false">` : "";
 
 /* ---------- Les calculs ---------- */
 
@@ -119,13 +129,13 @@ function mount(root, ctx) {
   let best = 0, right = 0, asked = 0;
   const total = level ? level.count : 15;
 
-  const node = h(`<div class="ce n${N} ${solo ? "solo" : ""}">
+  const node = h(`<div class="ce n${N} ${solo ? "solo" : ""} ${SLATE ? "slate" : ""}" style="${SLATE ? `--slate:url('${new URL(SLATE, document.baseURI).href}')` : ""}">
     ${players.map((p, i) => `
       <section class="ce-zone pos-${i} ${p.kind}" style="--seat:${p.color};--seat-deep:${p.deep};--seat-soft:${p.soft}">
         <div class="ce-inner">
           <div class="ce-head"><span class="ce-avatar">${p.art}</span><span class="ce-name">${p.label}</span>
             <span class="ce-series" hidden></span><span class="ce-score"></span></div>
-          <div class="ce-bar"><i></i></div>
+          <div class="ce-timer">${img(CHRONO, "ce-chrono")}<div class="ce-bar"><i></i></div></div>
           <div class="ce-body"></div>
         </div>
       </section>`).join("")}
@@ -144,7 +154,7 @@ function mount(root, ctx) {
       z.querySelector(".ce-score").textContent = solo ? `${right} / ${total}` : `${scores[i]} / ${GOAL}`;
       const s = z.querySelector(".ce-series");
       s.hidden = series[i] < 3;
-      s.textContent = `🔥 ${series[i]}`;
+      s.innerHTML = FLAME ? `${img(FLAME)}${series[i]}` : `🔥 ${series[i]}`;
     });
   }
 
@@ -221,13 +231,14 @@ function mount(root, ctx) {
       if (solo) {
         right++;
         best = Math.max(best, series[i]);
-        if (series[i] > 0 && series[i] % 3 === 0) { play("star"); flash(i, "Série de " + series[i] + " !"); }
-        else flash(i, "Bravo !");
+        if (series[i] > 0 && series[i] % 3 === 0) { play("star"); flash(i, "Série de " + series[i] + " !", "serie"); }
+        else flash(i, "Bravo !", "bravo");
         endRound(i);
       } else {
         scores[i]++;
         zones[i].classList.add("won");
-        flash(i, series[i] >= 3 ? `Série de ${series[i]} !` : "Le plus rapide !");
+        if (series[i] >= 3) flash(i, `Série de ${series[i]} !`, "serie");
+        else flash(i, "Le plus rapide !", "eclair");
         players.forEach((_, k) => { if (k !== i) series[k] = 0; });
         endRound(i);
       }
@@ -237,7 +248,7 @@ function mount(root, ctx) {
       button?.classList.add("bad");
       zones[i].classList.add("wrong-zone");
       play("wrong");
-      if (solo) { flash(i, `C'était ${fr(q.answer)}`); endRound(-1); }
+      if (solo) { flash(i, `C'était ${fr(q.answer)}`, "rate"); endRound(-1); }
       else if (players.every((p, k) => locked[k] || p.kind === "robot")) {
         // Tous les enfants se sont trompés : la manche continue pour les robots seulement s'il y en a.
         if (!players.some(p => p.kind === "robot")) endRound(-1);
@@ -246,8 +257,8 @@ function mount(root, ctx) {
     renderHead();
   }
 
-  function flash(i, message) {
-    const m = h(`<div class="ce-flash">${message}</div>`);
+  function flash(i, message, kind) {
+    const m = h(`<div class="ce-flash">${img(FLASH_PICS[kind])}<span>${message}</span></div>`);
     zones[i].querySelector(".ce-inner").append(m);
     setTimeout(() => m.remove(), 1300);
   }
@@ -259,7 +270,7 @@ function mount(root, ctx) {
       zones[i].classList.remove("hidden-q");
       body(i).querySelectorAll(".ce-choice").forEach(b => { if (Number(b.dataset.v) === questions[i].answer) b.classList.add("good"); b.disabled = true; });
     });
-    if (winner < 0 && !solo) flash(0, "Personne !");
+    if (winner < 0 && !solo) flash(0, "Personne !", "rate");
     renderHead();
     after(solo ? 1.3 : 1.6, () => {
       if (solo ? asked >= total : scores.some(s => s >= GOAL)) return finish();
@@ -327,7 +338,7 @@ function mount(root, ctx) {
       }
     });
     if (phase === "question" && left <= 0) {
-      if (solo) { series[0] = 0; flash(0, `C'était ${fr(questions[0].answer)}`); play("wrong"); }
+      if (solo) { series[0] = 0; flash(0, `C'était ${fr(questions[0].answer)}`, "rate"); play("wrong"); }
       endRound(-1);
     }
   }
@@ -351,6 +362,7 @@ function mount(root, ctx) {
 
 function demo() {
   const node = h(`<div class="ce-demo">
+    ${img(pic("eclair.png"), "ce-demo-eclair")}
     <div class="ce-demo-q">3 + 4 = ?</div>
     <div class="ce-demo-grid"><span>6</span><span class="yes">7</span><span>8</span><span>5</span></div>
   </div>`);

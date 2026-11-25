@@ -1170,3 +1170,24 @@ h1, h2, h3, h4, p { margin: 0; }
 .pc-ball-num { position: absolute; left: 50%; top: 30%; translate: -50% -50%; font-size: calc(var(--ball) * 0.42); font-weight: 700; color: #fff; -webkit-text-stroke: 4px #2B2350; paint-order: stroke fill; pointer-events: none; }
 .pc-drum.pictured { background: center / contain no-repeat; box-shadow: none; }
 .pc-hearts img { width: 24px; height: 24px; }
+
+/* Calcul-éclair : images du lot 12. L'ardoise est découpée en 9 morceaux (coins et craies gardés intacts). */
+.ce.slate { --k: .5; }
+.ce.slate.n3, .ce.slate.n4 { --k: .32; }
+.ce.slate .ce-question { position: relative; isolation: isolate; padding: calc(57px * var(--k)) calc(60px * var(--k)) calc(62px * var(--k)); }
+.ce.slate .ce-question::before {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  border-style: solid; border-image-source: var(--slate); border-image-slice: 57 261 62 60 fill;
+  border-width: calc(57px * var(--k)) calc(261px * var(--k)) calc(62px * var(--k)) calc(60px * var(--k));
+}
+.ce.slate .ce-q { color: #fff; text-shadow: 0 0 6px #ffffff55; }
+.ce.slate .ce-dots i { background: #fff; }
+.ce.slate .ce-dots b { color: #fff; }
+.ce-timer { flex: none; display: flex; align-items: center; gap: 6px; }
+.ce-timer .ce-bar { flex: 1; }
+.ce-chrono { width: 36px; height: 36px; margin: -13px -2px -13px -4px; }
+.ce-series { display: inline-flex; align-items: center; }
+.ce-series img { width: 1.5em; height: 1.5em; margin: -6px 2px -6px -6px; }
+.ce-flash { display: flex; align-items: center; gap: 6px; }
+.ce-flash img { width: 2.3em; height: 2.3em; margin: -.65em 0 -.65em -.55em; }
+.ce-demo-eclair { width: 64px; height: 64px; margin-bottom: -8px; }
