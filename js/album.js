@@ -56,7 +56,7 @@ export function album(app, { profileId } = {}) {
           <button class="btn sell-doubles" ${canSell ? "" : "disabled"}>${DOUBLES_PER_COIN} doubles → 1 ${iconArt("piece")}</button>
         </div>
       </section></aside>
-      ${FAMILIES.map(family => `
+      ${FAMILIES.filter(family => STICKERS.some(s => s.family === family.id)).map(family => `
         <section class="album-family">
           <h3>${family.title}</h3>
           <div class="sticker-grid">${STICKERS.filter(s => s.family === family.id).map(s => stickerHTML(s, owned[s.id] || 0)).join("")}</div>
