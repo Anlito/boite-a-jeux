@@ -1,7 +1,7 @@
 // Garde l'application sur l'appareil pour jouer sans réseau.
 // Changer VERSION à chaque mise en ligne pour que les appareils récupèrent la nouvelle version.
 importScripts("js/core/images-list.js");
-const VERSION = "boite-a-jeux-0.21.0";
+const VERSION = "boite-a-jeux-0.22.0";
 const SHELL = [
   "./",
   "index.html",
@@ -35,6 +35,8 @@ const SHELL = [
   "js/games/petits-bolides.js",
   "js/games/palet-glissant.js",
   "js/games/quatre-a-la-suite.js",
+  "js/games/tour-bancale.js",
+  "js/games/orchestre.js",
   ...self.ASSET_IMAGES.map(path => "assets/" + path)
 ];
 

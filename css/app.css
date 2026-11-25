@@ -1115,3 +1115,48 @@ h1, h2, h3, h4, p { margin: 0; }
 @keyframes pg-puck { 0%, 30% { transform: none; opacity: 1; } 70% { transform: translateY(-130px); opacity: 1; } 75%, 100% { transform: translateY(-130px); opacity: 0; } }
 /* Petits bolides : les coins sont aux joysticks, le bouton pause va au milieu en haut. */
 .screen.play:has(.pb) .hold-pause { left: 50%; transform: translateX(-50%); }
+
+/* ---------- L'orchestre ---------- */
+
+.or { position: absolute; inset: 0; display: flex; flex-direction: column; background: radial-gradient(circle at 50% 55%, #FFF6E2, #FFD9A8); padding: max(10px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)); }
+.or-top { flex: none; padding-left: 58px; }
+.or-players { display: flex; flex-wrap: wrap; gap: 8px; }
+.or-player { display: flex; align-items: center; gap: 6px; padding: 4px 12px 4px 4px; border-radius: 99px; background: #fff; box-shadow: 0 3px 0 #0000001a; transition: box-shadow .2s, transform .2s; }
+.or-player.turn { box-shadow: 0 0 0 5px var(--seat); transform: scale(1.05); }
+.or-player.out { opacity: .45; filter: grayscale(.8); }
+.or-avatar { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; box-shadow: 0 0 0 3px var(--seat); }
+.or-avatar svg, .or-avatar img { width: 92%; }
+.or-name { font-weight: 700; color: var(--seat-deep); }
+.or-hearts { color: #EB5757; font-size: 1.1rem; letter-spacing: 1px; }
+.or-stage { flex: 1; min-height: 0; position: relative; container-type: size; }
+.or-ring { position: absolute; left: 50%; top: 50%; translate: -50% -50%; width: min(100cqw, 100cqh); aspect-ratio: 1; }
+.or-ring.oops { animation: shake .4s; }
+.or-pad {
+  position: absolute; left: var(--x); top: var(--y); translate: -50% -50%;
+  width: 31%; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center;
+  background: var(--c); box-shadow: 0 8px 0 var(--d), inset 0 0 0 6px #ffffff55; touch-action: manipulation;
+  transition: transform .08s, filter .15s, box-shadow .08s; filter: saturate(.75) brightness(.92);
+}
+.or.n6 .or-pad, .or.n5 .or-pad { width: 25%; }
+.or-pad span { font-size: min(9cqmin, 64px); font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; pointer-events: none; }
+.or-pad.lit { filter: none; transform: scale(1.14); box-shadow: 0 0 0 8px #fff, 0 0 40px 12px var(--c), 0 6px 0 var(--d); }
+.or-pad:active { transform: translateY(5px); box-shadow: 0 3px 0 var(--d); }
+.or-ring.listening .or-pad { cursor: default; }
+.or-center { position: absolute; left: 50%; top: 50%; translate: -50% -50%; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; pointer-events: none; max-width: 40cqmin; }
+.or-count { font-size: min(7cqmin, 40px); font-weight: 700; color: var(--ink); }
+.or-say { font-size: min(4.2cqmin, 22px); font-weight: 600; color: #8A4A00; }
+.or-demo { display: flex; gap: 12px; }
+.or-demo span { display: grid; place-items: center; width: 60px; height: 60px; border-radius: 50%; background: var(--c); font-size: 1.8rem; animation: or-demo 2.4s infinite; animation-delay: calc(var(--k) * .5s); filter: saturate(.75) brightness(.92); }
+@keyframes or-demo { 0%, 18% { transform: scale(1.15); filter: none; box-shadow: 0 0 0 5px #fff; } 25%, 100% { transform: none; } }
+
+/* ---------- La tour bancale ---------- */
+
+.tb-demo { position: relative; width: 170px; height: 170px; }
+.tb-demo-crane { position: absolute; left: 0; right: 0; top: 0; height: 12px; border-radius: 6px; background: #FFC83D; box-shadow: 0 0 0 3px #2B2350; }
+.tb-demo-block { position: absolute; width: 70px; height: 26px; border-radius: 7px; box-shadow: 0 0 0 3px #2B2350; }
+.tb-demo-block.swing { left: 50px; top: 30px; background: #8EC5FF; animation: tb-swing 2.6s ease-in-out infinite; }
+.tb-demo-block.b1 { left: 52px; top: 118px; background: #FFD36B; }
+.tb-demo-block.b2 { left: 46px; top: 92px; background: #FF9AA8; opacity: 0; animation: tb-drop 2.6s infinite; }
+.tb-demo-base { position: absolute; left: 40px; top: 146px; width: 90px; height: 20px; border-radius: 5px; background: #8C7BB8; box-shadow: 0 0 0 3px #2B2350; }
+@keyframes tb-swing { 0%, 100% { transform: translateX(-40px); } 50% { transform: translateX(40px); } }
+@keyframes tb-drop { 0%, 55% { opacity: 0; transform: translateY(-60px); } 70%, 100% { opacity: 1; transform: none; } }

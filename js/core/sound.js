@@ -65,3 +65,15 @@ export function say(text) {
 export function hush() {
   window.speechSynthesis?.cancel();
 }
+
+// Une note de musique (L'orchestre) : fréquence en Hz, durée en secondes, timbre de l'oscillateur.
+// Le timbre « cloche » ajoute une harmonique pour un son de xylophone.
+export function music(frequency, duration = 0.35, type = "triangle") {
+  if (!store.settings.sound || !audio || audio.state !== "running") return;
+  if (type === "cloche") {
+    note(frequency, 0, duration, { type: "sine", volume: 0.16 });
+    note(frequency * 2.01, 0, duration * 0.5, { type: "sine", volume: 0.05 });
+    return;
+  }
+  note(frequency, 0, duration, { type, volume: type === "square" || type === "sawtooth" ? 0.06 : 0.14 });
+}

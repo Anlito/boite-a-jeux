@@ -22,6 +22,8 @@ Application web installable, sans compte, sans publicité, qui fonctionne hors l
 | Petits bolides | 1 à 4, robots (course sur 10 circuits, joystick) | Jouable |
 | Palet glissant | 1 à 2, robot (hockey sur table, face à face) | Jouable |
 | Quatre à la suite | 1 à 2, robot, chacun son tour (aligner 4 jetons) | Jouable |
+| La tour bancale | 1 à 4, robots, chacun son tour (empiler des étages) | Jouable |
+| L’orchestre | 1 à 4, robots, chacun son tour (mémoire des sons) | Jouable |
 
 En solo, chaque jeu a 10 niveaux dessinés à la main (une étoile débloque le suivant) puis un défi libre, ouvert après le niveau 5.
 

@@ -14,7 +14,9 @@ import pairesCachees from "./paires-cachees.js";
 import petitsBolides from "./petits-bolides.js";
 import paletGlissant from "./palet-glissant.js";
 import quatreALaSuite from "./quatre-a-la-suite.js";
+import tourBancale from "./tour-bancale.js";
+import orchestre from "./orchestre.js";
 
-export const GAMES = [topDepart, sumoBulles, lesCanons, astroBalles, courseGrenouilles, panierFruits, tirEtoiles, serpentins, patateChaude, calculEclair, oeilDeLynx, pairesCachees, petitsBolides, paletGlissant, quatreALaSuite];
+export const GAMES = [topDepart, sumoBulles, lesCanons, astroBalles, courseGrenouilles, panierFruits, tirEtoiles, serpentins, patateChaude, calculEclair, oeilDeLynx, pairesCachees, petitsBolides, paletGlissant, quatreALaSuite, tourBancale, orchestre];
 
 export const gameById = id => GAMES.find(game => game.id === id);
