@@ -12,7 +12,7 @@ Ce fichier sert à reprendre le travail dans une nouvelle conversation sans tout
 - Tout en français, vocabulaire simple, sans jargon.
 - Le README décrit l'organisation du code et l'interface d'un jeu (`mount`, `levels`, `finish`).
 
-## État actuel (version 0.26.0, fin novembre 2026)
+## État actuel (version 0.27.0, fin novembre 2026)
 
 17 jeux en ligne :
 
@@ -30,19 +30,20 @@ Ce fichier sert à reprendre le travail dans une nouvelle conversation sans tout
 | Calcul-éclair | `calcul-eclair.js` | lot 12 |
 | Œil de lynx (principe du Dobble) | `oeil-de-lynx.js` | lot 13 (pictos partagés, `js/core/pictos.js`) |
 | Paires cachées (mémoire) | `paires-cachees.js` | lots 13 et 14 (cartes, tapis, 8 couples d'animaux presque pareils pour le thème « pareils ») |
-| Petits bolides (course, joystick) | `petits-bolides.js` | **lot 15 attendu** |
+| Petits bolides (course, joystick) | `petits-bolides.js` | lot 15 (la route reste dessinée par le jeu ; décor placé au hasard hors de la route) |
 | Palet glissant (1-2) | `palet-glissant.js` | pas de lot prévu |
 | Quatre à la suite (1-2) | `quatre-a-la-suite.js` | pas de lot prévu |
 | La tour bancale | `tour-bancale.js` | pas de lot prévu |
 | L'orchestre | `orchestre.js` | pas de lot prévu |
 
 Lot 1 (mascotte, 12 avatars, 3 robots, icônes) et lot 2 (14 vignettes) intégrés.
-**Vignettes manquantes** : Œil de lynx, Paires cachées (lot 16), Palet glissant, Quatre à la suite (dessin SVG en attendant ; pas encore dans le brief).
+Lot 16 (vignettes d'Œil de lynx et de Paires cachées) intégré.
+**Vignettes manquantes** : Palet glissant, Quatre à la suite (dessin SVG en attendant ; pas encore dans le brief).
 
 ## Ce qu'attend ChatGPT
 
 Le brief complet est dans [docs/brief-visuels-lots-6-16.md](docs/brief-visuels-lots-6-16.md) (paragraphe de style à coller en tête de chaque demande, puis un lot par jeu). L'utilisateur l'a déjà transmis à ChatGPT.
-Restent à recevoir : **lot 15** (Petits bolides), **lot 16** (2 vignettes).
+Tous les lots du brief (1 à 16) sont intégrés.
 À ajouter au brief si l'utilisateur le souhaite : vignettes de Palet glissant et Quatre à la suite, et un lot pour La tour bancale / L'orchestre.
 
 ## Jeux encore possibles (proposés, pas faits)

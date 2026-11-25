@@ -1,7 +1,7 @@
 // Petits bolides : course de petites voitures vue de dessus, sur un circuit au milieu de l'écran.
 // La voiture avance toute seule ; on la dirige avec un joystick qui apparaît sous le doigt, dans son coin.
 // Taches d'huile (la voiture glisse) et flèches turbo. Le premier qui finit ses tours gagne.
-import { SEATS, robotArt } from "../core/art.js";
+import { SEATS, robotArt, hasImage, imagePath } from "../core/art.js";
 import { play, say } from "../core/sound.js";
 import { h } from "../core/ui.js";
 import { createStage, createLoop, artImage, text, createParticles } from "../core/stage.js";
@@ -51,6 +51,14 @@ const ROBOT = {
 const INK = "#2B2350";
 
 const between = (a, b) => a + Math.random() * (b - a);
+
+// Images du lot 15 (sinon : les dessins de secours plus bas). Toutes sont vues du dessus.
+const pic = name => hasImage(`petits-bolides/${name}`) ? artImage(`<img src="${imagePath(`petits-bolides/${name}`)}">`) : null;
+const ready = image => !!(image && image.complete && image.naturalWidth);
+const CAR_W = 88;                // longueur de la voiture dessinée (l'image fait 2 × 1)
+const COCKPIT = -0.016;          // le cockpit est un peu en arrière du milieu de l'image
+// Décor posé dans l'herbe, loin de la route : [image, largeur, hauteur, combien].
+const DECOR = [["gradins.png", 360, 90, 1], ["arbre.png", 130, 130, 3], ["buisson.png", 96, 96, 3], ["pneus.png", 84, 84, 2]];
 const angleGap = (a, b) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
 
 // Courbe fermée qui passe par les points (Catmull-Rom), échantillonnée régulièrement.
@@ -97,7 +105,16 @@ function mount(root, ctx) {
   const stage = createStage(root, { width: W, height: H, background: "#7BC96A" });
   const g = stage.ctx;
   const particles = createParticles();
-  const scenery = paintScenery();
+  const pics = {
+    grass: pic("herbe.jpg"), oil: pic("tache-huile.png"), boost: pic("fleche-turbo.png"), flag: pic("drapeau-damier.png"), dust: pic("poussiere.png"),
+    decor: Object.fromEntries(DECOR.map(([name]) => [name, pic(name)]))
+  };
+  const decor = placeDecor();
+  const dust = [];
+  let scenery = paintScenery();
+  // Le décor est peint une fois : on le repeint quand ses images finissent d'arriver.
+  [pics.grass, pics.flag, ...Object.values(pics.decor)].filter(image => image && !ready(image))
+    .forEach(image => image.addEventListener("load", () => { scenery = paintScenery(); }, { once: true }));
 
   const items = [
     ...setup.oil.map((f, k) => ({ kind: "oil", ...offsetPoint(Math.floor(f * T), k % 2 ? 26 : -26) })),
@@ -117,6 +134,7 @@ function mount(root, ctx) {
       angle: s.a, speed: 0, idx: (T - back) % T, lap: 0, half: false, done: false, time: 0, place: 0,
       aim: null, slide: 0, turbo: 0, spin: 0,
       image: artImage(p.kind === "robot" ? robotArt(p.level) : p.art),
+      body: pic(`voiture-${(SEATS.find(seat => seat.color === p.color) || SEATS[i % 4]).name.toLowerCase()}.png`),
       ai: { offset: between(-30, 30), next: 0 }
     };
   });
@@ -209,6 +227,8 @@ function mount(root, ctx) {
 
   function update(dt) {
     particles.update(dt);
+    for (const d of dust) d.age += dt;
+    while (dust.length && dust[0].age > 0.6) dust.shift();
     if (phase === "countdown") {
       const before = Math.ceil(timer);
       timer -= dt;
@@ -224,6 +244,8 @@ function mount(root, ctx) {
       const here = nearest(c);
       c.idx = here.i;
       const onRoad = here.dist < ROAD / 2;
+      // Dans l'herbe, la voiture soulève un peu de poussière.
+      if (!onRoad && c.speed > 80 && Math.random() < dt * 9) dust.push({ x: c.x - Math.cos(c.angle) * 34, y: c.y - Math.sin(c.angle) * 34, age: 0, turn: between(0, 6.3) });
       let top = TOP * (brain ? brain.speed : 1 - (c.p.boost || 0) * 0) * (onRoad ? 1 : OFFROAD) * (c.turbo > 0 ? 1.45 : 1) * (c.done ? 0.4 : 1);
       // Braquer fort ralentit la voiture : elle prend les virages serrés sans tourner en rond.
       if (c.aim !== null && c.spin <= 0) top *= 1 - 0.55 * Math.min(1, Math.abs(angleGap(c.aim, c.angle)) / 1.1);
@@ -307,13 +329,37 @@ function mount(root, ctx) {
 
   /* ---------- Dessin ---------- */
 
+  // Places du décor : dans l'herbe, entre les deux bandes des joysticks, sans toucher la route ni un autre décor.
+  function placeDecor() {
+    const placed = [];
+    const clear = (x, y, w, hgt) => track.every(p => Math.hypot(Math.max(Math.abs(p.x - x) - w / 2, 0), Math.max(Math.abs(p.y - y) - hgt / 2, 0)) > ROAD / 2 + 30)
+      && placed.every(d => Math.abs(d.x - x) > (d.w + w) / 2 + 16 || Math.abs(d.y - y) > (d.h + hgt) / 2 + 16);
+    for (const [name, w, hgt, count] of DECOR) {
+      for (let n = 0; n < count; n++) {
+        for (let tries = 0; tries < 80; tries++) {
+          const x = between(BAND + w / 2, W - BAND - w / 2), y = between(hgt / 2 + 12, H - hgt / 2 - 12);
+          if (clear(x, y, w, hgt)) { placed.push({ name, x, y, w, h: hgt, turn: name === "gradins.png" ? 0 : between(-0.4, 0.4) }); break; }
+        }
+      }
+    }
+    return placed;
+  }
+
   function paintScenery() {
     const c = document.createElement("canvas");
     c.width = W; c.height = H;
     const b = c.getContext("2d");
     b.fillStyle = "#86D17A"; b.fillRect(0, 0, W, H);
-    // Touffes d'herbe et fleurs
-    for (let k = 0; k < 140; k++) {
+    if (ready(pics.grass)) { b.fillStyle = b.createPattern(pics.grass, "repeat"); b.fillRect(0, 0, W, H); }
+    for (const d of decor) {
+      const image = pics.decor[d.name];
+      if (!ready(image)) continue;
+      b.save(); b.translate(d.x, d.y); b.rotate(d.turn);
+      b.drawImage(image, -d.w / 0.8 / 2, -d.h / 0.8 / 2, d.w / 0.8, d.h / 0.8);   // l'image a 10 % de marge de chaque côté
+      b.restore();
+    }
+    // Touffes d'herbe et fleurs (sans l'image d'herbe)
+    for (let k = 0; k < (ready(pics.grass) ? 0 : 140); k++) {
       const x = Math.random() * W, y = Math.random() * H;
       b.fillStyle = k % 9 === 0 ? "#FFD93D" : k % 7 === 0 ? "#FF9AA8" : "#6DBE5E";
       b.beginPath(); b.arc(x, y, k % 7 === 0 || k % 9 === 0 ? 5 : 9, 0, Math.PI * 2); b.fill();
@@ -331,11 +377,37 @@ function mount(root, ctx) {
     b.save(); b.translate(s.x, s.y); b.rotate(s.a + Math.PI / 2);
     for (let r = 0; r < 2; r++) for (let k = -6; k < 6; k++) { b.fillStyle = (k + r) % 2 ? "#fff" : INK; b.fillRect(k * 11, -11 + r * 11, 11, 11); }
     b.restore();
-    void nx; void ny;
+    // Drapeau à damier au bord de la route, du côté qui reste dans l'écran
+    if (ready(pics.flag)) {
+      const out = ROAD / 2 + 52;
+      const fits = k => s.x + nx * out * k > 70 && s.x + nx * out * k < W - 70 && s.y + ny * out * k > 70 && s.y + ny * out * k < H - 70;
+      const side = fits(1) ? 1 : -1;
+      b.drawImage(pics.flag, s.x + nx * out * side - 55, s.y + ny * out * side - 62, 110, 110);
+    }
     return c;
   }
 
   function drawCar(c) {
+    if (ready(c.body)) {
+      g.save();
+      g.translate(c.x, c.y);
+      g.fillStyle = "#00000030";
+      g.beginPath(); g.ellipse(4, 6, 36, 17, c.angle, 0, Math.PI * 2); g.fill();
+      g.rotate(c.angle);
+      g.drawImage(c.body, -CAR_W / 2, -CAR_W / 4, CAR_W, CAR_W / 2);
+      // Pilote (avatar) dans le cockpit, comme un casque
+      g.translate(COCKPIT * CAR_W, 0);
+      g.rotate(-c.angle);
+      g.fillStyle = "#fff"; g.strokeStyle = INK; g.lineWidth = 2.5;
+      g.beginPath(); g.arc(0, 0, 11.5, 0, Math.PI * 2); g.fill(); g.stroke();
+      if (c.image.complete && c.image.naturalWidth) {
+        g.save(); g.beginPath(); g.arc(0, 0, 10, 0, Math.PI * 2); g.clip();
+        g.drawImage(c.image, -12.5, -11.5, 25, 25); g.restore();
+      }
+      g.restore();
+      if (c.turbo > 0) particles.burst(c.x - Math.cos(c.angle) * 40, c.y - Math.sin(c.angle) * 40, "#FFC83D", { count: 1, speed: 60, size: 6, life: 0.3 });
+      return;
+    }
     g.save();
     g.translate(c.x, c.y);
     g.fillStyle = "#00000030";
@@ -363,6 +435,14 @@ function mount(root, ctx) {
 
   function drawItem(it, t) {
     g.save(); g.translate(it.x, it.y);
+    const image = it.kind === "oil" ? pics.oil : pics.boost;
+    if (ready(image)) {
+      g.rotate(it.kind === "oil" ? 0.4 : it.a);
+      if (it.kind === "boost") g.globalAlpha = 0.85 + Math.sin(t * 6) * 0.15;
+      g.drawImage(image, -40, -40, 80, 80);
+      g.restore();
+      return;
+    }
     if (it.kind === "oil") {
       g.fillStyle = "#2B2350dd";
       g.beginPath(); g.ellipse(0, 0, 30, 20, 0.4, 0, Math.PI * 2); g.fill();
@@ -398,6 +478,11 @@ function mount(root, ctx) {
     stage.begin();
     g.drawImage(scenery, 0, 0);
     items.forEach(it => drawItem(it, t));
+    if (ready(pics.dust)) for (const d of dust) {
+      const k = d.age / 0.6, size = 34 + k * 26;
+      g.save(); g.globalAlpha = 0.85 * (1 - k); g.translate(d.x, d.y); g.rotate(d.turn);
+      g.drawImage(pics.dust, -size / 2, -size / 2, size, size); g.restore();
+    }
     cars.forEach(drawCar);
     particles.draw(g);
     cars.forEach(drawHud);
@@ -444,7 +529,7 @@ function mount(root, ctx) {
 }
 
 function demo() {
-  const node = h(`<div class="pb-demo"><div class="pb-demo-track"><span class="pb-demo-car"></span></div><div class="sp-demo-joy"><i></i></div></div>`);
+  const node = h(`<div class="pb-demo"><div class="pb-demo-track"><span class="pb-demo-car ${hasImage("petits-bolides/voiture-bleu.png") ? "pic" : ""}"></span></div><div class="sp-demo-joy"><i></i></div></div>`);
   return { node, stop() {} };
 }
 

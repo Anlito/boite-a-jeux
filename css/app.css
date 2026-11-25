@@ -1211,3 +1211,6 @@ h1, h2, h3, h4, p { margin: 0; }
 .pm-demo.cards .pm-demo-card { border-radius: 9% / 7%; box-shadow: none; background: url("../assets/paires-cachees/dos-carte.png") center / 100% 100%; }
 .pm-demo.cards .pm-demo-card.a, .pm-demo.cards .pm-demo-card.b { animation-name: pm-demo-cards; }
 @keyframes pm-demo-cards { 0%, 15% { background-image: url("../assets/paires-cachees/dos-carte.png"); } 25%, 85% { background-image: url("../assets/paires-cachees/carte-trouvee.png"); } }
+
+/* Petits bolides : voiture du lot 15 dans la démonstration des règles. */
+.pb-demo-car.pic { width: 44px; height: 22px; border-radius: 0; box-shadow: none; background: url("../assets/petits-bolides/voiture-bleu.png") center / contain no-repeat; }
