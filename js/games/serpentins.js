@@ -2,7 +2,7 @@
 // pour ne toucher ni les bords, ni les traces. Le dernier serpent en vie gagne la manche.
 // Pommes : le serpent saute un instant (il passe par-dessus les traces et laisse un trou).
 // Portails : on entre dans l'un, on ressort par l'autre.
-import { SEATS, robotArt } from "../core/art.js";
+import { SEATS, robotArt, hasImage, imagePath } from "../core/art.js";
 import { play, say } from "../core/sound.js";
 import { h } from "../core/ui.js";
 import { createStage, createLoop, artImage, seatAt, text, createParticles } from "../core/stage.js";
@@ -50,6 +50,10 @@ const START_ANGLE = {
 };
 const PORTAL_COLORS = ["#FF9F43", "#2ED3C6"];
 const INK = "#2B2350";
+// Images du lot 10 (null si absentes : on garde le dessin).
+const picture = name => hasImage(`serpentins/${name}`) ? artImage(`<img src="${imagePath(`serpentins/${name}`)}">`) : null;
+const ready = img => img && img.complete && img.naturalWidth;
+const IMG = { apple: picture("pomme.png"), sparks: picture("etincelles-saut.png"), portals: { "#FF9F43": picture("portail-orange.png"), "#2ED3C6": picture("portail-turquoise.png") } };
 
 const between = (a, b) => a + Math.random() * (b - a);
 const angleGap = (a, b) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
@@ -87,7 +91,7 @@ function mount(root, ctx) {
   const fieldHeight = innerHeight - band * (solo ? 1 : 2);
   const FW = Math.round(Math.min(2400, Math.max(520, FH * innerWidth / Math.max(200, fieldHeight))));
   const CX = FW / 2, CY = FH / 2;
-  const stage = createStage(field, { width: FW, height: FH, background: "#1B2145" });
+  const stage = createStage(field, { width: FW, height: FH, background: "#151F54" });
   const g = stage.ctx;
   const particles = createParticles();
   const padOf = i => node.querySelector(`.pad-${i}`);
@@ -451,27 +455,34 @@ function mount(root, ctx) {
     c.width = Math.round(FW * SHARP); c.height = Math.round(FH * SHARP);
     const b = c.getContext("2d");
     b.scale(SHARP, SHARP);
-    b.fillStyle = "#1B2145";
+    b.fillStyle = "#151F54";
     b.fillRect(0, 0, FW, FH);
-    const floor = b.createRadialGradient(CX, CY, 100, CX, CY, Math.max(FW, FH) * 0.7);
-    floor.addColorStop(0, "#34407A");
-    floor.addColorStop(1, "#262F5E");
-    b.fillStyle = floor;
+    b.fillStyle = "#141D54";
     b.beginPath(); b.roundRect(WALL, WALL, FW - WALL * 2, FH - WALL * 2, 34); b.fill();
-    b.fillStyle = "#ffffff16";
-    for (let x = WALL + 25; x < FW - WALL; x += 50) {
-      for (let y = WALL + 25; y < FH - WALL; y += 50) { b.beginPath(); b.arc(x, y, 2.6, 0, Math.PI * 2); b.fill(); }
+    b.fillStyle = "#455199";
+    for (let x = WALL + 30; x < FW - WALL - 10; x += 52) {
+      for (let y = WALL + 30; y < FH - WALL - 10; y += 52) { b.beginPath(); b.arc(x, y, 2.8, 0, Math.PI * 2); b.fill(); }
     }
-    b.strokeStyle = "#8F9BFF";
-    b.lineWidth = 8;
-    b.beginPath(); b.roundRect(WALL - 4, WALL - 4, FW - WALL * 2 + 8, FH - WALL * 2 + 8, 38); b.stroke();
-    b.strokeStyle = "#ffffff33";
-    b.lineWidth = 3;
-    b.beginPath(); b.roundRect(WALL + 6, WALL + 6, FW - WALL * 2 - 12, FH - WALL * 2 - 12, 28); b.stroke();
+    // Bord lavande épais, cerné de foncé, avec deux reflets
+    b.strokeStyle = INK; b.lineWidth = 24;
+    b.beginPath(); b.roundRect(WALL - 9, WALL - 9, FW - WALL * 2 + 18, FH - WALL * 2 + 18, 44); b.stroke();
+    b.strokeStyle = "#C6B5FB"; b.lineWidth = 18;
+    b.beginPath(); b.roundRect(WALL - 9, WALL - 9, FW - WALL * 2 + 18, FH - WALL * 2 + 18, 44); b.stroke();
+    b.strokeStyle = "#ffffffcc"; b.lineWidth = 5; b.lineCap = "round";
+    b.beginPath(); b.arc(WALL + 35, WALL + 35, 44, Math.PI * 1.1, Math.PI * 1.4); b.stroke();
+    b.beginPath(); b.arc(FW - WALL - 35, FH - WALL - 35, 44, Math.PI * 0.1, Math.PI * 0.4); b.stroke();
     return c;
   }
 
   function drawPortal(p, color, t) {
+    const pic = IMG.portals[color];
+    if (ready(pic)) {
+      const size = PORTAL * 2.5 * 512 / 402;
+      g.save(); g.translate(p.x, p.y); g.rotate(t * 2.2);
+      g.drawImage(pic, -size / 2, -size / 2, size, size);
+      g.restore();
+      return;
+    }
     g.save();
     g.translate(p.x, p.y);
     const glow = g.createRadialGradient(0, 0, 4, 0, 0, PORTAL + 14);
@@ -492,6 +503,12 @@ function mount(root, ctx) {
 
   function drawApple(a) {
     const bob = Math.sin(a.t * 4) * 4;
+    if (ready(IMG.apple)) {
+      g.fillStyle = "#00000033";
+      g.beginPath(); g.ellipse(a.x, a.y + 24, 18, 5, 0, 0, Math.PI * 2); g.fill();
+      g.drawImage(IMG.apple, a.x - 32, a.y - 32 + bob, 64, 64);
+      return;
+    }
     g.save();
     g.translate(a.x, a.y + bob);
     g.fillStyle = "#00000033";
@@ -543,7 +560,14 @@ function mount(root, ctx) {
     g.strokeStyle = s.p.color;
     g.lineWidth = 4.5;
     g.beginPath(); g.arc(0, 0, HEAD, 0, Math.PI * 2); g.stroke();
-    if (s.jump > 0) {
+    if (s.jump > 0 && ready(IMG.sparks)) {
+      // Anneau d'étincelles du lot, qui tourne ; il clignote juste avant la fin du saut.
+      g.save(); g.rotate(t * 3);
+      g.globalAlpha = Math.floor(s.jump * 8) % 2 && s.jump < 0.4 ? 0.35 : 1;
+      const size = (HEAD + 12) * 2 * 512 / 408;
+      g.drawImage(IMG.sparks, -size / 2, -size / 2, size, size);
+      g.restore();
+    } else if (s.jump > 0) {
       g.strokeStyle = Math.floor(s.jump * 8) % 2 && s.jump < 0.4 ? "#FFC83D55" : "#FFC83D";
       g.lineWidth = 4;
       g.setLineDash([6, 6]);

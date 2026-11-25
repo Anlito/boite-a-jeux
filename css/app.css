@@ -650,7 +650,7 @@ h1, h2, h3, h4, p { margin: 0; }
 /* ---------- Serpentins ---------- */
 
 /* Le terrain occupe l'espace entre les bandes des manettes (haut et bas). */
-.sp { position: absolute; inset: 0; background: #1B2145; --btn: clamp(54px, 14vmin, 86px); --band: calc(var(--btn) + 22px); }
+.sp { position: absolute; inset: 0; background: #151F54; --btn: clamp(54px, 14vmin, 86px); --band: calc(var(--btn) + 22px); }
 .sp-field { position: absolute; left: 0; right: 0; top: var(--band); bottom: var(--band); }
 .sp.n1 .sp-field { top: 0; }
 .sp-pad { width: auto; }
