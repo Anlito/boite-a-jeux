@@ -32,7 +32,7 @@ export function album(app, { profileId } = {}) {
     const canOpen = coins >= PACK_PRICE;
     const doubles = store.doubles(current.id);
     const canSell = doubles >= DOUBLES_PER_COIN;
-    body.innerHTML = `
+    body.innerHTML = `<aside class="album-side">
       <nav class="album-people" aria-label="Choisir l'album">${profiles.map(p => `
         <button class="album-person ${p.id === current.id ? "current" : ""}" data-profile="${p.id}" aria-label="Album de ${p.name}">
           <span class="album-person-art">${avatarArt(p.avatar)}</span><span>${p.name}</span>
@@ -55,7 +55,7 @@ export function album(app, { profileId } = {}) {
           <span class="doubles-text">${doubles} double${doubles > 1 ? "s" : ""}</span>
           <button class="btn sell-doubles" ${canSell ? "" : "disabled"}>${DOUBLES_PER_COIN} doubles → 1 ${iconArt("piece")}</button>
         </div>
-      </section>
+      </section></aside>
       ${FAMILIES.map(family => `
         <section class="album-family">
           <h3>${family.title}</h3>

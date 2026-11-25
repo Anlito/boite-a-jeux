@@ -43,6 +43,7 @@ h1, h2, h3, h4, p { margin: 0; }
 }
 .btn:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 1px 0 var(--shadow); }
 .btn:disabled { opacity: .45; }
+.btn > img { width: 28px; height: 28px; flex: none; }
 .btn.primary { background: var(--accent); color: #fff; box-shadow: 0 6px 0 var(--accent-deep); }
 .btn.primary:active:not(:disabled) { box-shadow: 0 2px 0 var(--accent-deep); }
 .btn.wide { width: 100%; }
@@ -494,6 +495,7 @@ h1, h2, h3, h4, p { margin: 0; }
 @media (max-width: 420px) { .album-btn span { display: none; } .album-btn { padding: 0 11px; } }
 
 .album-body { display: flex; flex-direction: column; gap: 18px; }
+.album-side { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
 .album-empty { display: flex; align-items: flex-end; gap: 12px; margin: 40px auto; max-width: 560px; }
 .album-empty-mascot { width: 110px; flex: none; }
 .album-people { display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 8px; }
@@ -825,3 +827,105 @@ h1, h2, h3, h4, p { margin: 0; }
 .ce-demo-grid span { display: grid; place-items: center; height: 52px; border-radius: 14px; background: #fff; font-size: 1.5rem; font-weight: 700; box-shadow: 0 5px 0 #2F80ED, inset 0 0 0 3px #2F80ED; }
 .ce-demo-grid .yes { animation: ce-yes 2.4s infinite; }
 @keyframes ce-yes { 0%, 40% { background: #fff; color: inherit; } 50%, 90% { background: #27AE60; color: #fff; transform: scale(1.08); } }
+
+/* ---------- Écrans hors jeu en paysage (téléphone couché) ----------
+   L'écran est large mais bas : on met les éléments côte à côte plutôt que les uns sous les autres. */
+
+@media (orientation: landscape) and (max-height: 600px) {
+  .screen:not(.play) {
+    width: 100%; max-width: 1200px; gap: 10px;
+    padding: max(8px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  }
+  .icon-btn { width: 48px; height: 48px; }
+  .bar-space { width: 48px; }
+  .bar h2 { font-size: 1.5rem; }
+  .ask { font-size: 1.2rem; }
+  .screen .go-btn { min-height: 58px; font-size: 1.35rem; }
+
+  /* Accueil : titre sur une ligne, plus de jeux par rangée */
+  .home-mascot { width: 54px; }
+  .home-top h1 { font-size: 1.9rem; }
+  .home-top h1 span { display: inline; }
+  .shelf { grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 12px; }
+  .game-card { gap: 6px; padding: 10px 10px 12px; }
+  .game-name { font-size: 1.15rem; }
+  .game-meta { padding: 0 2px; gap: 4px; }
+  .pill { width: 22px; height: 22px; font-size: .75rem; }
+  .pills { gap: 3px; }
+  .game-meta .stars svg { width: 18px; height: 18px; }
+
+  /* Nombre de joueurs : les quatre sur une ligne */
+  .count-grid { grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .count-btn { min-height: 0; padding: 12px; gap: 4px; }
+  .count-art { max-width: 84px; }
+  .count-num { font-size: 2rem; }
+
+  /* Qui joue ? : une carte par joueur, côte à côte */
+  .seat-grid.n2 { grid-template-columns: repeat(2, 1fr); }
+  .seat-grid.n3 { grid-template-columns: repeat(3, 1fr); }
+  .seat-grid.n4 { grid-template-columns: repeat(4, 1fr); }
+  .seat-grid { gap: 10px; }
+  .seat { padding: 10px 8px; gap: 6px; }
+  .seat-art { width: 68px; }
+  .seat-name { font-size: 1.1rem; }
+  .boost-step { min-width: 40px; height: 34px; }
+
+  /* Niveaux : deux rangées de tuiles */
+  .level-grid { grid-template-columns: repeat(6, 1fr); max-width: 900px; gap: 10px; }
+  .level-tile { aspect-ratio: auto; min-height: 84px; gap: 2px; }
+  .level-tile.free { min-height: 84px; }
+  .level-num { font-size: 1.9rem; }
+  .level-tile .stars svg { width: 18px; height: 18px; }
+
+  /* Règles : démonstration à gauche, explication à droite */
+  .rules-stage { flex-direction: row; gap: 28px; }
+  .rules-demo { flex: none; max-width: 45%; }
+  .rules-mascot { width: 72px; }
+  .bubble { font-size: 1.15rem; padding: 14px 18px; }
+
+  /* Podium : résultat à gauche, boutons à droite */
+  .screen.podium {
+    display: grid; grid-template-columns: 1fr minmax(260px, 360px); grid-template-rows: auto 1fr;
+    grid-template-areas: "top actions" "body actions"; align-items: center; justify-items: center; column-gap: 24px;
+  }
+  .podium-top { grid-area: top; flex-direction: row; gap: 12px; }
+  .podium-mascot { width: 60px; }
+  .podium-top h2 { font-size: 2rem; }
+  .podium-steps, .solo-result { grid-area: body; }
+  .podium-actions { grid-area: actions; width: 100%; gap: 10px; }
+  .podium-actions .btn.huge { min-height: 64px; font-size: 1.5rem; }
+  .solo-result { padding: 12px 16px; gap: 6px; flex-direction: row; flex-wrap: wrap; justify-content: center; }
+  .solo-result > * { flex-basis: 100%; }
+  .solo-result > .solo-art, .solo-result > .big-stars { flex-basis: auto; }
+  .solo-art { width: 64px; }
+  .big-stars .stars svg { width: 46px; height: 46px; }
+  .solo-value { font-size: 1.15rem; }
+  .step-art { width: 52px; }
+  .step-name { font-size: 1rem; }
+  .step-block b { font-size: 1.6rem; }
+  .place-1 .step-block { height: 100px; }
+  .place-2 .step-block { height: 80px; }
+  .place-3 .step-block { height: 62px; }
+  .place-4 .step-block { height: 50px; }
+
+  /* Album : joueurs, pièces et pochette à gauche ; autocollants à droite */
+  .album-body { display: grid; grid-template-columns: minmax(250px, 34%) 1fr; column-gap: 18px; row-gap: 14px; align-items: start; }
+  .album-side { grid-column: 1; grid-row: 1 / span 20; position: sticky; top: 8px; gap: 12px; max-height: calc(100dvh - 16px); overflow-y: auto; padding: 2px 2px 8px; }
+  .album-top { padding: 10px 14px; }
+  .album-family { grid-column: 2; }
+  .album-empty { grid-column: 1 / -1; }
+  .open-pack { min-height: 56px; font-size: 1.15rem; }
+  .pack-open { min-height: 0; }
+  .modal { padding: 16px; }
+}
+
+/* Tablette couchée : le podium passe aussi en deux colonnes (résultat à gauche, boutons à droite). */
+@media (orientation: landscape) and (min-height: 601px) {
+  .screen.podium {
+    display: grid; grid-template-columns: 1fr minmax(300px, 400px); grid-template-rows: auto 1fr;
+    grid-template-areas: "top actions" "body actions"; align-items: center; justify-items: center; column-gap: 32px;
+  }
+  .podium-top { grid-area: top; }
+  .podium-steps, .solo-result { grid-area: body; }
+  .podium-actions { grid-area: actions; width: 100%; }
+}
