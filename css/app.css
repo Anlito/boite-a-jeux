@@ -1160,3 +1160,13 @@ h1, h2, h3, h4, p { margin: 0; }
 .tb-demo-base { position: absolute; left: 40px; top: 146px; width: 90px; height: 20px; border-radius: 5px; background: #8C7BB8; box-shadow: 0 0 0 3px #2B2350; }
 @keyframes tb-swing { 0%, 100% { transform: translateX(-40px); } 50% { transform: translateX(40px); } }
 @keyframes tb-drop { 0%, 55% { opacity: 0; transform: translateY(-60px); } 70%, 100% { opacity: 1; transform: none; } }
+
+/* Patate chaude : images du lot 11 */
+.pc-bomb .pc-body.panic { display: none; }
+.pc-bomb.hurry .pc-body.panic { display: inline; }
+.pc-bomb.hurry .pc-body.calm { display: none; }
+.pc-boom img { width: 100%; height: 100%; object-fit: contain; }
+.pc-ball img { width: 100%; display: block; pointer-events: none; }
+.pc-ball-num { position: absolute; left: 50%; top: 30%; translate: -50% -50%; font-size: calc(var(--ball) * 0.42); font-weight: 700; color: #fff; -webkit-text-stroke: 4px #2B2350; paint-order: stroke fill; pointer-events: none; }
+.pc-drum.pictured { background: center / contain no-repeat; box-shadow: none; }
+.pc-hearts img { width: 24px; height: 24px; }

@@ -1,7 +1,7 @@
 // Patate chaude : une bombe passe de joueur en joueur. Pour la renvoyer, il faut réussir un mini-défi
 // dans sa zone (éclater des ballons, les taper dans l'ordre, refaire une suite…). La mèche brûle,
 // et personne ne sait exactement quand elle va exploser. Celui qui la tient perd un cœur.
-import { SEATS, robotArt } from "../core/art.js";
+import { SEATS, robotArt, hasImage, imagePath } from "../core/art.js";
 import { play, say } from "../core/sound.js";
 import { h } from "../core/ui.js";
 import { createLoop } from "../core/stage.js";
@@ -50,6 +50,16 @@ const between = (a, b) => a + Math.random() * (b - a);
 const pickOne = list => list[Math.floor(Math.random() * list.length)];
 const shuffle = list => list.map(v => [Math.random(), v]).sort((a, b) => a[0] - b[0]).map(p => p[1]);
 
+// Images du lot 11 (si absentes : les dessins ci-dessous).
+const pic = name => hasImage(`patate-chaude/${name}`) ? imagePath(`patate-chaude/${name}`) : null;
+const BALLOON_PICS = { "#FF6B6B": "rouge", "#4D96FF": "bleu", "#5CC96B": "vert", "#FFD93D": "jaune", "#B983FF": "violet", "#FF9F43": "orange" };
+const POP_PIC = pic("ballon-eclate.png");
+// Ballon du lot à la couleur demandée (avec le numéro par-dessus pour le défi « dans l'ordre »).
+const balloonHTML = (label, color) => {
+  const src = color && pic(`ballon-${BALLOON_PICS[color]}.png`);
+  if (!src) return balloonSVG(label);
+  return `<img src="${src}" alt="" draggable="false">${label ? `<span class="pc-ball-num">${label}</span>` : ""}`;
+};
 const balloonSVG = (label = "") => `<svg viewBox="0 0 60 84" aria-hidden="true">
   <path d="M30 60 q-5 9 2 22" stroke="${INK}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
   <path d="M25 61 h10 l-5 -6z" style="fill:var(--c)" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>
@@ -58,7 +68,15 @@ const balloonSVG = (label = "") => `<svg viewBox="0 0 60 84" aria-hidden="true">
   ${label ? `<text x="30" y="40" text-anchor="middle" font-size="28" font-weight="700" fill="#fff" stroke="${INK}" stroke-width="5" paint-order="stroke">${label}</text>` : ""}
 </svg>`;
 
-const bombSVG = () => `<svg viewBox="0 0 100 100" aria-hidden="true">
+const BOMB = pic("bombe.png"), BOMB_PANIC = pic("bombe-panique.png");
+const bombSVG = () => BOMB ? `<svg viewBox="0 0 512 512" aria-hidden="true">
+  <path d="M232 122 C226 58 320 34 430 92" stroke="${INK}" stroke-width="30" fill="none" stroke-linecap="round" opacity=".25"/>
+  <path class="pc-fuse-out" d="M232 122 C226 58 320 34 430 92" stroke="${INK}" stroke-width="30" fill="none" stroke-linecap="round" pathLength="1"/>
+  <path class="pc-fuse" d="M232 122 C226 58 320 34 430 92" stroke="#F4D7A4" stroke-width="20" fill="none" stroke-linecap="round" pathLength="1"/>
+  <image class="pc-body calm" href="${BOMB}" width="512" height="512"/>
+  ${BOMB_PANIC ? `<image class="pc-body panic" href="${BOMB_PANIC}" width="512" height="512" x="-22" y="-6"/>` : ""}
+  <g class="pc-spark"><circle r="42" fill="#FFC83D" opacity=".55"/><circle r="22" fill="#FFF3B0"/></g>
+</svg>` : `<svg viewBox="0 0 100 100" aria-hidden="true">
   <path class="pc-fuse-bg" d="M62 26 q12 -16 28 -10" stroke="#00000022" stroke-width="5" fill="none" stroke-linecap="round"/>
   <path class="pc-fuse" d="M62 26 q12 -16 28 -10" stroke="#C9A36B" stroke-width="5" fill="none" stroke-linecap="round" pathLength="1"/>
   <rect x="50" y="20" width="20" height="15" rx="4" fill="#5A4F86" stroke="${INK}" stroke-width="3" transform="rotate(35 60 27)"/>
@@ -69,14 +87,16 @@ const bombSVG = () => `<svg viewBox="0 0 100 100" aria-hidden="true">
   <path d="M38 77 q6 -4 12 0" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>
   <g class="pc-spark"><circle r="9" fill="#FFC83D" opacity=".55"/><circle r="5" fill="#FFF3B0"/></g>
 </svg>`;
+const BOOM = pic("boum.png");
 
-const boomSVG = () => `<svg viewBox="0 0 120 120" aria-hidden="true">
+const boomSVG = () => BOOM ? `<img src="${BOOM}" alt="" draggable="false">` : `<svg viewBox="0 0 120 120" aria-hidden="true">
   <path d="M60 4 L70 34 L100 16 L88 46 L118 52 L90 66 L110 94 L78 84 L72 116 L58 88 L36 112 L38 80 L6 88 L28 62 L2 44 L34 42 L22 12 L48 32 Z" fill="#FFC83D" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>
   <path d="M60 26 L66 44 L84 36 L76 54 L94 60 L76 68 L84 84 L66 76 L60 94 L54 76 L36 84 L44 68 L26 60 L44 54 L36 36 L54 44 Z" fill="#FF6B3D"/>
   <text x="60" y="68" text-anchor="middle" font-size="22" font-weight="700" fill="#fff" stroke="${INK}" stroke-width="5" paint-order="stroke">BOUM</text>
 </svg>`;
 
-const heartSVG = full => `<svg viewBox="0 0 24 22" aria-hidden="true"><path d="M12 20 C4 14 1.5 10 1.5 6.5 A5 5 0 0 1 12 4.5 A5 5 0 0 1 22.5 6.5 C22.5 10 20 14 12 20Z" fill="${full ? "#FF5A6E" : "#ffffff"}" stroke="${INK}" stroke-width="2"/></svg>`;
+const HEARTS = [pic("coeur-vide.png"), pic("coeur.png")];
+const heartSVG = full => HEARTS[full ? 1 : 0] ? `<img src="${HEARTS[full ? 1 : 0]}" alt="" draggable="false">` : `<svg viewBox="0 0 24 22" aria-hidden="true"><path d="M12 20 C4 14 1.5 10 1.5 6.5 A5 5 0 0 1 12 4.5 A5 5 0 0 1 22.5 6.5 C22.5 10 20 14 12 20Z" fill="${full ? "#FF5A6E" : "#ffffff"}" stroke="${INK}" stroke-width="2"/></svg>`;
 
 // Places des ballons dans l'aire de jeu (en %), sans qu'ils se chevauchent trop.
 function spots(count) {
@@ -121,6 +141,7 @@ function mount(root, ctx) {
   const hints = zones.map(z => z.querySelector(".pc-hint"));
   const bomb = node.querySelector(".pc-bomb");
   const fuse = bomb.querySelector(".pc-fuse");
+  const fuseOut = bomb.querySelector(".pc-fuse-out");   // contour de la mèche du lot
   const spark = bomb.querySelector(".pc-spark");
   const banner = node.querySelector(".pc-banner");
   const fuseLength = 1;
@@ -246,7 +267,7 @@ function mount(root, ctx) {
       const numbers = shuffle(Array.from({ length: size }, (_, k) => k + 1));
       spots(size).forEach((s, k) => {
         const color = kind === "ordre" ? "#B983FF" : pickOne(COLORS);
-        const el = h(`<div class="pc-ball" style="left:${s.x}%;top:${s.y}%;--c:${color};--drift:${between(2.2, 3.4).toFixed(2)}s;--dx:${between(-30, 30).toFixed(0)}px;--dy:${between(-26, 26).toFixed(0)}px">${balloonSVG(kind === "ordre" ? numbers[k] : "")}</div>`);
+        const el = h(`<div class="pc-ball" style="left:${s.x}%;top:${s.y}%;--c:${color};--drift:${between(2.2, 3.4).toFixed(2)}s;--dx:${between(-30, 30).toFixed(0)}px;--dy:${between(-26, 26).toFixed(0)}px">${balloonHTML(kind === "ordre" ? numbers[k] : "", color)}</div>`);
         el.dataset.n = kind === "ordre" ? numbers[k] : 0;
         arena.append(el);
         ch.items.push(el);
@@ -257,7 +278,7 @@ function mount(root, ctx) {
       const total = Math.min(9, size * 2);
       const list = shuffle([...Array(size).fill(mine), ...Array.from({ length: total - size }, () => pickOne(decoys))]);
       spots(total).forEach((s, k) => {
-        const el = h(`<div class="pc-ball small" style="left:${s.x}%;top:${s.y}%;--c:${list[k]}">${balloonSVG()}</div>`);
+        const el = h(`<div class="pc-ball small" style="left:${s.x}%;top:${s.y}%;--c:${list[k]}">${balloonHTML("", list[k])}</div>`);
         el.dataset.good = list[k] === mine ? "1" : "";
         arena.append(el);
         ch.items.push(el);
@@ -265,7 +286,8 @@ function mount(root, ctx) {
       hints[i].innerHTML = `Seulement les ballons <b style="color:${mine === "#FFD93D" ? "#9A7000" : mine}">${word}</b> !`;
     } else if (kind === "frappe") {
       ch.left = size * 3;
-      const el = h(`<div class="pc-drum"><span class="pc-drum-count">${ch.left}</span></div>`);
+      const drum = pic("tambour.png");
+      const el = h(`<div class="pc-drum ${drum ? "pictured" : ""}" ${drum ? `style="background-image:url('${drum}')"` : ""}><span class="pc-drum-count">${ch.left}</span></div>`);
       arena.append(el);
       ch.items.push(el);
     } else if (kind === "simon") {
@@ -327,6 +349,7 @@ function mount(root, ctx) {
       return;
     }
     ch.step++;
+    if (POP_PIC) el.innerHTML = `<img src="${POP_PIC}" alt="" draggable="false">`;
     el.classList.add("popped");
     play("pop");
     const remaining = ch.items.filter(item => !item.classList.contains("popped") && (ch.kind !== "couleur" || item.dataset.good === "1"));
@@ -403,6 +426,7 @@ function mount(root, ctx) {
     if (phase === "hold" || phase === "fly") {
       const left = Math.max(0, 1 - burnt / fuseShown);
       fuse.style.strokeDasharray = `${left * fuseLength} 2`;
+      if (fuseOut) fuseOut.style.strokeDasharray = `${left * fuseLength} 2`;
       const point = fuse.getPointAtLength ? fuse.getPointAtLength(left * fuse.getTotalLength()) : null;
       if (point) spark.setAttribute("transform", `translate(${point.x} ${point.y}) scale(${0.8 + Math.random() * 0.5})`);
       bomb.classList.toggle("hurry", left < 0.3);
