@@ -32,7 +32,7 @@ En solo, chaque jeu a 10 niveaux dessinés à la main (une étoile débloque le 
 - `index.html`, `css/app.css` : la page et la charte graphique.
 - `js/main.js` : navigation entre les écrans.
 - `js/screens.js` : écrans communs (accueil, nombre de joueurs, qui joue, règles, partie, podium).
-- `js/album.js` et `js/core/stickers.js` : pièces et album d'autocollants (88 autocollants en 3 raretés — lot 21 : dinosaures et mer —, et jusqu'à 128 quand les lots 22 et 23 seront livrés — un autocollant n'apparaît que si son image existe ; pochette à 10 pièces tirée au hasard, 5 doubles se vendent contre 1 pièce).
+- `js/album.js` et `js/core/stickers.js` : pièces et album d'autocollants (108 autocollants en 3 raretés — lots 21 et 22 : dinosaures, mer, engins, espace —, et 128 quand le lot 23 sera livré — un autocollant n'apparaît que si son image existe ; pochette à 10 pièces tirée au hasard, 5 doubles se vendent contre 1 pièce).
 - `js/core/` : socle partagé — dessins (`art.js`), sons et voix (`sound.js`), profils et records (`store.js`), outils d'interface (`ui.js`), moteur des jeux dessinés (`stage.js` : terrain aux proportions fixes, boucle, particules).
 - `js/games/` : un fichier par jeu, déclaré dans `js/games/index.js`.
 - `sw.js` : fonctionnement hors ligne. Changer `VERSION` à chaque mise en ligne.
