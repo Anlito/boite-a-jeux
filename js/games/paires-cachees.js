@@ -2,18 +2,35 @@
 // et si elles sont pareilles on les garde et on rejoue. À plusieurs, chacun son tour, sur le même plateau.
 // Plus tard dans les niveaux, deux cartes changent de place quand on se trompe.
 import { PICTOS, pictoHTML } from "../core/pictos.js";
+import { hasImage, imagePath } from "../core/art.js";
 import { play, say } from "../core/sound.js";
 import { h } from "../core/ui.js";
 import { createLoop } from "../core/stage.js";
+
+// Lot 14 : 8 couples d'animaux presque pareils (un seul détail change), rangés deux par deux.
+const TWINS = [["chat-roux", "chat-gris"], ["chien-tache", "chien-sans-tache"], ["lapin-blanc", "lapin-brun"], ["ours-noeud", "ours-sans-noeud"],
+  ["poisson-rayures", "poisson-points"], ["tortue-verte", "tortue-bleue"], ["papillon-rose", "papillon-jaune"], ["coccinelle-5-points", "coccinelle-2-points"]];
+const HAS_TWINS = TWINS.flat().every(n => hasImage(`paires-cachees/${n}.png`));
+// Cartes, dos et tapis du lot 14 (sinon : les dessins de la feuille de style).
+const HAS_CARDS = ["dos-carte", "face-carte", "carte-trouvee", "fond-table"].every(n => hasImage(`paires-cachees/${n}.${n === "fond-table" ? "jpg" : "png"}`));
 
 // Les dessins du lot 13 (js/core/pictos.js), 16 par thème.
 const THEMES = {
   animaux: PICTOS.animaux,
   fruits: PICTOS.fruits,
-  // Des têtes d'animaux, toutes rondes et souriantes : il faut bien regarder les détails.
-  pareils: PICTOS.animaux,
+  // Des animaux qui se ressemblent : il faut bien regarder les détails (sans le lot 14 : les têtes d'animaux).
+  pareils: HAS_TWINS ? TWINS.flat() : PICTOS.animaux,
   melange: PICTOS.objets
 };
+const faceHTML = face => TWINS.flat().includes(face) && HAS_TWINS
+  ? `<img class="picto" src="${imagePath(`paires-cachees/${face}.png`)}" alt="" draggable="false">`
+  : pictoHTML(face);
+
+// Dessins de la partie. Pour « pareils », on prend les couples entiers : chaque animal a son presque-jumeau.
+function pickFaces(rules) {
+  if (rules.theme === "pareils" && HAS_TWINS) return shuffle(TWINS).flatMap(pair => shuffle(pair)).slice(0, rules.pairs);
+  return shuffle(THEMES[rules.theme]).slice(0, rules.pairs);
+}
 const MULTI_PAIRS = 12;
 
 // Niveaux solo : nombre de paires, dessins, cartes qui bougent, essais pour 1, 2, 3 étoiles.
@@ -46,10 +63,10 @@ function mount(root, ctx) {
   const scores = players.map(() => 0);
   let tries = 0;
 
-  const faces = shuffle(THEMES[rules.theme]).slice(0, rules.pairs);
+  const faces = pickFaces(rules);
   let deck = shuffle([...faces, ...faces]).map((face, id) => ({ id, face, found: false, up: false }));
 
-  const node = h(`<div class="pm n${N} ${solo ? "solo" : ""}">
+  const node = h(`<div class="pm n${N} ${solo ? "solo" : ""} ${HAS_CARDS ? "cards" : ""}">
     <div class="pm-board"></div>
     <div class="pads">${players.map((p, i) => `
       <div class="pad pm-pad pad-${i}" style="--seat:${p.color};--seat-deep:${p.deep};--seat-soft:${p.soft}">
@@ -70,7 +87,7 @@ function mount(root, ctx) {
 
   function render() {
     board.innerHTML = deck.map((card, k) => `<button class="pm-card ${card.found ? "found" : ""} ${card.up || card.found ? "up" : ""}" data-k="${k}" aria-label="Carte ${k + 1}">
-      <span class="pm-back"></span><span class="pm-face">${pictoHTML(card.face)}</span></button>`).join("");
+      <span class="pm-back"></span><span class="pm-face">${faceHTML(card.face)}</span></button>`).join("");
     layout();
   }
 
@@ -157,8 +174,8 @@ function mount(root, ctx) {
     seen.delete(a); seen.delete(b);
     if (sb) seen.set(a, sb);
     if (sa) seen.set(b, sa);
-    cardEl(a).querySelector(".pm-face").innerHTML = pictoHTML(deck[a].face);
-    cardEl(b).querySelector(".pm-face").innerHTML = pictoHTML(deck[b].face);
+    cardEl(a).querySelector(".pm-face").innerHTML = faceHTML(deck[a].face);
+    cardEl(b).querySelector(".pm-face").innerHTML = faceHTML(deck[b].face);
     [cardEl(a), cardEl(b)].forEach(el => { el.classList.remove("swap"); void el.offsetWidth; el.classList.add("swap"); });
     play("trap");
   }
@@ -241,7 +258,7 @@ function mount(root, ctx) {
 }
 
 function demo() {
-  const node = h(`<div class="pm-demo">
+  const node = h(`<div class="pm-demo ${HAS_CARDS ? "cards" : ""}">
     <span class="pm-demo-card a">${pictoHTML("chien")}</span><span class="pm-demo-card"></span><span class="pm-demo-card b">${pictoHTML("chien")}</span><span class="pm-demo-card"></span>
   </div>`);
   return { node, stop() {} };

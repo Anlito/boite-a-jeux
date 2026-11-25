@@ -1201,3 +1201,13 @@ h1, h2, h3, h4, p { margin: 0; }
 .pm-demo-card.a .picto, .pm-demo-card.b .picto { animation: pm-demo-pic 3s infinite; }
 .pm-demo-card.b .picto { animation-delay: .5s; }
 @keyframes pm-demo-pic { 0%, 15% { opacity: 0; } 25%, 85% { opacity: 1; } }
+
+/* Paires cachées : cartes, dos et tapis du lot 14. */
+.pm.cards { background: #F8BFD0 url("../assets/paires-cachees/fond-table.jpg") center / cover; }
+.pm.cards .pm-back, .pm.cards .pm-face { border-radius: 9% / 7%; background: center / 100% 100% no-repeat; }
+.pm.cards .pm-back { background-image: url("../assets/paires-cachees/dos-carte.png"); box-shadow: 0 4px 0 #7B4FC855; }
+.pm.cards .pm-face { background-image: url("../assets/paires-cachees/face-carte.png"); box-shadow: 0 4px 0 #0000002a; }
+.pm.cards .pm-card.found .pm-face { background-image: url("../assets/paires-cachees/carte-trouvee.png"); box-shadow: 0 4px 0 #18804A88; }
+.pm-demo.cards .pm-demo-card { border-radius: 9% / 7%; box-shadow: none; background: url("../assets/paires-cachees/dos-carte.png") center / 100% 100%; }
+.pm-demo.cards .pm-demo-card.a, .pm-demo.cards .pm-demo-card.b { animation-name: pm-demo-cards; }
+@keyframes pm-demo-cards { 0%, 15% { background-image: url("../assets/paires-cachees/dos-carte.png"); } 25%, 85% { background-image: url("../assets/paires-cachees/carte-trouvee.png"); } }
