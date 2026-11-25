@@ -1113,3 +1113,5 @@ h1, h2, h3, h4, p { margin: 0; }
 .pg-demo-puck { position: absolute; left: 63px; top: 118px; width: 24px; height: 24px; border-radius: 50%; background: #2B2350; box-shadow: inset 0 0 0 7px #2B2350, inset 0 0 0 12px #FFC83D; animation: pg-puck 2s infinite; }
 @keyframes pg-hit { 0%, 20% { transform: translateY(20px); } 35%, 100% { transform: none; } }
 @keyframes pg-puck { 0%, 30% { transform: none; opacity: 1; } 70% { transform: translateY(-130px); opacity: 1; } 75%, 100% { transform: translateY(-130px); opacity: 0; } }
+/* Petits bolides : les coins sont aux joysticks, le bouton pause va au milieu en haut. */
+.screen.play:has(.pb) .hold-pause { left: 50%; transform: translateX(-50%); }

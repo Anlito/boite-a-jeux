@@ -6,12 +6,13 @@ import { play, say } from "../core/sound.js";
 import { h } from "../core/ui.js";
 import { createStage, createLoop, artImage, text, createParticles } from "../core/stage.js";
 
-const W = 1600, H = 1000;
+const W = 2000, H = 1000;
+const BAND = 300;                // bande libre à gauche et à droite du circuit, pour les joysticks
+const PAD = 105;                 // rayon du joystick
 const ROAD = 132;                // largeur de la route
 const CAR = 19;                  // rayon de choc d'une voiture
 const TOP = 340, ACCEL = 260, GRIP = 2.9;
 const OFFROAD = 0.5;             // vitesse dans l'herbe
-const DEAD = 0.08;               // joystick : zone morte (en fraction du rayon)
 
 // Circuits : points de passage (0 à 1 sur la largeur et la hauteur), dans le sens de la course.
 const ellipse = (k, rx = 0.4, ry = 0.36) => Array.from({ length: k }, (_, i) => [0.5 + Math.cos(i / k * Math.PI * 2) * rx, 0.5 + Math.sin(i / k * Math.PI * 2) * ry]);
@@ -54,7 +55,7 @@ const angleGap = (a, b) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
 
 // Courbe fermée qui passe par les points (Catmull-Rom), échantillonnée régulièrement.
 function buildTrack(points) {
-  const P = points.map(([x, y]) => [130 + x * (W - 260), 120 + y * (H - 240)]);
+  const P = points.map(([x, y]) => [BAND + x * (W - BAND * 2), 120 + y * (H - 240)]);
   const raw = [];
   const n = P.length;
   for (let i = 0; i < n; i++) {
@@ -92,6 +93,7 @@ function mount(root, ctx) {
   const T = track.length;
   const LAPS = setup.laps;
 
+  root.classList.add("pb");
   const stage = createStage(root, { width: W, height: H, background: "#7BC96A" });
   const g = stage.ctx;
   const particles = createParticles();
@@ -123,7 +125,16 @@ function mount(root, ctx) {
 
   /* ---------- Commandes : joystick dans son coin ---------- */
 
+  // Chaque enfant a son joystick dessiné dans son coin, hors du circuit : on pose le doigt dessus
+  // (ou n'importe où dans son quart d'écran) et on le pousse vers où la voiture doit aller.
   const sticks = new Map();
+  const padOf = seat => {
+    if (solo) return { x: W - BAND / 2, y: H - 250, top: false };
+    if (N === 2) return seat === 0 ? { x: W - BAND / 2, y: H - 250, top: false } : { x: BAND / 2, y: 250, top: true };
+    return [{ x: BAND / 2, y: H - 250, top: false }, { x: W - BAND / 2, y: 250, top: true },
+      { x: W - BAND / 2, y: H - 250, top: false }, { x: BAND / 2, y: 250, top: true }][seat];
+  };
+  const pads = players.map((p, i) => p.kind === "human" ? padOf(i) : null);
   // Quel joueur touche ? On regarde dans le repère du terrain (il peut être tourné).
   function seatOf(world) {
     if (solo) return 0;
@@ -132,22 +143,26 @@ function mount(root, ctx) {
     if (N === 3) return top ? 1 : left ? 0 : 2;
     return top ? (left ? 3 : 1) : (left ? 0 : 2);
   }
+  function aimFrom(stick, world) {
+    const pad = pads[stick.seat];
+    stick.x = world.x; stick.y = world.y;
+    const dx = world.x - pad.x, dy = world.y - pad.y;
+    if (Math.hypot(dx, dy) > PAD * 0.25) cars[stick.seat].aim = Math.atan2(dy, dx);
+  }
   const onDown = event => {
     if (phase === "done") return;
     const world = stage.toWorld(event.clientX, event.clientY);
     const seat = seatOf(world);
-    if (players[seat]?.kind !== "human" || [...sticks.values()].some(s => s.seat === seat)) return;
+    if (players[seat]?.kind !== "human" || [...sticks.values()].some(st => st.seat === seat)) return;
     event.preventDefault();
-    sticks.set(event.pointerId, { seat, x0: world.x, y0: world.y, x: world.x, y: world.y });
+    const stick = { seat, x: world.x, y: world.y };
+    sticks.set(event.pointerId, stick);
+    aimFrom(stick, world);
     try { stage.canvas.setPointerCapture(event.pointerId); } catch { /* doigt déjà relâché */ }
   };
   const onMove = event => {
     const stick = sticks.get(event.pointerId);
-    if (!stick) return;
-    const world = stage.toWorld(event.clientX, event.clientY);
-    stick.x = world.x; stick.y = world.y;
-    const dx = world.x - stick.x0, dy = world.y - stick.y0;
-    if (Math.hypot(dx, dy) > 90 * DEAD * 3) cars[stick.seat].aim = Math.atan2(dy, dx);
+    if (stick) aimFrom(stick, stage.toWorld(event.clientX, event.clientY));
   };
   const onUp = event => {
     const stick = sticks.get(event.pointerId);
@@ -367,15 +382,14 @@ function mount(root, ctx) {
   function drawHud(c) {
     if (c.p.kind !== "human") return;
     const seat = c.seat;
-    const top = solo ? false : N === 2 ? seat === 1 : seat === 1 || seat === 3;
-    const left = solo ? true : N === 2 ? seat === 0 : seat === 0 || seat === 3;
-    const x = left ? 150 : W - 150, y = top ? 54 : H - 54;
+    const pad = pads[seat];
+    const top = pad.top, x = pad.x, y = top ? 54 : H - 54;
     g.save(); g.translate(x, y); if (top) g.rotate(Math.PI);
     g.fillStyle = "#ffffffe6"; g.strokeStyle = c.p.color; g.lineWidth = 5;
-    g.beginPath(); g.roundRect(-120, -34, 240, 68, 34); g.fill(); g.stroke();
+    g.beginPath(); g.roundRect(-136, -34, 272, 68, 34); g.fill(); g.stroke();
     const label = c.done ? (c.place === 1 ? "1er !" : `${c.place}e`) : `Tour ${Math.min(c.lap + 1, LAPS)} / ${LAPS}`;
-    text(g, label, 26, 2, { size: 32, color: c.p.deep });
-    if (c.image.complete && c.image.naturalWidth) g.drawImage(c.image, -112, -28, 56, 56);
+    text(g, label, 28, 2, { size: 32, color: c.p.deep });
+    if (c.image.complete && c.image.naturalWidth) g.drawImage(c.image, -128, -28, 56, 56);
     g.restore();
   }
 
@@ -387,22 +401,31 @@ function mount(root, ctx) {
     cars.forEach(drawCar);
     particles.draw(g);
     cars.forEach(drawHud);
-    // Joysticks sous les doigts
-    for (const s of sticks.values()) {
-      const c = cars[s.seat];
-      const dx = s.x - s.x0, dy = s.y - s.y0, d = Math.hypot(dx, dy), k = d > 70 ? 70 / d : 1;
-      g.fillStyle = c.p.color + "33"; g.strokeStyle = c.p.color; g.lineWidth = 5;
-      g.beginPath(); g.arc(s.x0, s.y0, 90, 0, Math.PI * 2); g.fill(); g.stroke();
-      g.fillStyle = c.p.color; g.strokeStyle = "#fff"; g.lineWidth = 5;
-      g.beginPath(); g.arc(s.x0 + dx * k, s.y0 + dy * k, 40, 0, Math.PI * 2); g.fill(); g.stroke();
-    }
+    // Joysticks : toujours visibles dans le coin de chaque enfant
+    pads.forEach((pad, seat) => {
+      if (!pad) return;
+      const c = cars[seat];
+      const stick = [...sticks.values()].find(st => st.seat === seat);
+      let kx = 0, ky = 0;
+      if (stick) { const dx = stick.x - pad.x, dy = stick.y - pad.y, d = Math.hypot(dx, dy) || 1, k = Math.min(1, (PAD - 30) / d); kx = dx * k; ky = dy * k; }
+      const pulse = phase === "countdown" ? 1 + Math.sin(t * 6) * 0.06 : 1;
+      g.save(); g.translate(pad.x, pad.y); g.scale(pulse, pulse);
+      g.fillStyle = c.p.color + "30"; g.strokeStyle = c.p.color; g.lineWidth = 6;
+      g.beginPath(); g.arc(0, 0, PAD, 0, Math.PI * 2); g.fill(); g.stroke();
+      // Petites flèches autour
+      g.fillStyle = c.p.color + "aa";
+      for (let k = 0; k < 4; k++) { g.save(); g.rotate(k * Math.PI / 2); g.beginPath(); g.moveTo(PAD - 14, 0); g.lineTo(PAD - 30, -12); g.lineTo(PAD - 30, 12); g.closePath(); g.fill(); g.restore(); }
+      g.fillStyle = c.p.color; g.strokeStyle = "#fff"; g.lineWidth = 6;
+      g.beginPath(); g.arc(kx, ky, 42, 0, Math.PI * 2); g.fill(); g.stroke();
+      g.restore();
+    });
     if (phase === "countdown") {
       const n = Math.ceil(timer);
       text(g, n > 3 ? CIRCUITS[setup.circuit].name : n > 0 ? String(n) : "", W / 2, H / 2, { size: n > 3 ? 80 : 160, color: "#fff", stroke: INK });
     } else if (phase === "race" && raceTime < 1) {
       text(g, "Partez !", W / 2, H / 2, { size: 120, color: "#fff", stroke: INK });
     }
-    if (solo && phase !== "countdown") text(g, `${raceTime.toFixed(1).replace(".", ",")} s`, W - 130, 50, { size: 38, color: "#fff", stroke: INK });
+    if (solo && phase !== "countdown") text(g, `${raceTime.toFixed(1).replace(".", ",")} s`, W - BAND / 2, 60, { size: 40, color: "#fff", stroke: INK });
   }
 
   const loop = createLoop(dt => { update(dt); draw(); });
