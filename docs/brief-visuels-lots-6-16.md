@@ -1,8 +1,10 @@
-# La boîte à jeux : brief des visuels, lots 6 à 12
+# La boîte à jeux : brief des visuels, lots 6 à 16
 
 Les lots 1 à 5 sont intégrés : éléments communs, 14 vignettes, Top départ, Sumo-bulles et Les canons.
 Les jeux ci-dessous dessinent encore leurs images eux-mêmes. Un lot par jeu, à demander **un par un**
 à ChatGPT, dans cet ordre (le premier est celui dont le design est le plus à revoir).
+
+Les lots 13 à 16 concernent les jeux ajoutés ensuite (Œil de lynx, Paires cachées, Petits bolides). Le lot 13 passe en premier parmi eux : ses dessins servent à deux jeux, et ils remplacent les emojis, dont l’aspect change d’un téléphone à l’autre.
 
 ## À coller en tête de chaque demande
 
@@ -103,3 +105,49 @@ Archive `la-boite-a-jeux-lot-12.zip`, dossier `calcul-eclair/`. Peu d'images : l
 - `rate.png` : petit nuage gris un peu triste mais gentil, avec une goutte.
 - `chrono.png` : chronomètre rond rose et blanc, PNG 256 × 256.
 - `fond-ardoise.jpg` : 1920 × 1080. Mur de classe pastel avec une ardoise verte arrondie au centre, vide, quelques craies de couleur posées en bas.
+
+## Lot 13 : Les pictos (Œil de lynx et Paires cachées)
+
+Archive `la-boite-a-jeux-lot-13.zip`, dossier `pictos/`. 48 petits dessins, PNG 256 × 256, chacun seul sur fond transparent, bien reconnaissable même tout petit et même tourné dans tous les sens. Pas d’ombre portée, pas de fond rond derrière. Une seule couleur dominante par dessin, et des couleurs bien différentes d’un dessin à l’autre.
+
+- Animaux, une tête de face souriante (16) : `chien.png`, `chat.png`, `lapin.png`, `renard.png`, `ours.png`, `panda.png`, `koala.png`, `tigre.png`, `lion.png`, `vache.png`, `cochon.png`, `grenouille.png`, `singe.png`, `poule.png`, `pingouin.png`, `hibou.png`.
+- Fruits et légumes (16) : `pomme.png`, `poire.png`, `orange.png`, `citron.png`, `banane.png`, `pasteque.png`, `raisin.png`, `fraise.png`, `cerises.png`, `peche.png`, `kiwi.png`, `ananas.png`, `noix-de-coco.png`, `myrtilles.png`, `carotte.png`, `champignon.png`.
+- Objets et nature (16) : `voiture.png`, `fusee.png`, `ballon-foot.png`, `ballon-baudruche.png`, `arc-en-ciel.png`, `etoile.png`, `tournesol.png`, `glace.png`, `cadeau.png`, `guitare.png`, `reveil.png`, `cle.png`, `soleil.png`, `lune.png`, `flocon.png`, `puzzle.png`.
+
+## Lot 14 : Paires cachées
+
+Archive `la-boite-a-jeux-lot-14.zip`, dossier `paires-cachees/`.
+
+- `dos-carte.png` : PNG 384 × 512. Dos de carte à jouer arrondi, motif violet pastel (petites étoiles et rayures), sans texte. Il doit être symétrique : il est vu à l’endroit par les uns et à l’envers par les autres.
+- `face-carte.png` : PNG 384 × 512. Face de carte blanche et vide, coins arrondis, fin liseré lavande (le jeu pose le picto au centre).
+- `carte-trouvee.png` : PNG 384 × 512. La même face, avec un liseré vert et de petites étincelles dans les coins (paire trouvée).
+- Animaux qui se ressemblent, pour les niveaux difficiles (16 images, PNG 256 × 256, même style que le lot 13). Chaque paire se distingue par un seul détail visible :
+  - `chat-roux.png` et `chat-gris.png`, `chien-tache.png` et `chien-sans-tache.png`
+  - `lapin-blanc.png` et `lapin-brun.png`, `ours-noeud.png` (avec un nœud) et `ours-sans-noeud.png`
+  - `poisson-rayures.png` et `poisson-points.png`, `tortue-verte.png` et `tortue-bleue.png`
+  - `papillon-rose.png` et `papillon-jaune.png`, `coccinelle-5-points.png` et `coccinelle-2-points.png`
+- `fond-table.jpg` : 1920 × 1080. Tapis de jeu rose très doux, légèrement texturé, rien au centre.
+
+## Lot 15 : Petits bolides
+
+Archive `la-boite-a-jeux-lot-15.zip`, dossier `petits-bolides/`. Tout est vu **du dessus**, comme un circuit de jouets posé sur l’herbe.
+
+- `voiture-bleu.png`, `voiture-rouge.png`, `voiture-vert.png`, `voiture-jaune.png` : PNG 512 × 256. Petite voiture de course jouet, vue du dessus, **tournée vers la droite**, deux fois plus longue que large, quatre roues visibles. Le cockpit est un rond blanc vide au milieu : le jeu y met l’avatar de l’enfant.
+- `herbe.jpg` : 1024 × 1024. Herbe vert tendre avec quelques touffes et petites fleurs, **qui se répète sans raccord visible** quand on la pose côte à côte.
+- `tache-huile.png` : tache d’huile violet foncé, brillante, vue du dessus.
+- `fleche-turbo.png` : deux chevrons jaunes lumineux posés au sol, pointés vers la droite.
+- `drapeau-damier.png` : drapeau à damier noir et blanc sur un petit poteau.
+- `arbre.png` : arbre rond vu du dessus (boule de feuillage).
+- `buisson.png` : buisson fleuri vu du dessus.
+- `pneus.png` : pile de pneus jouets colorés, vue du dessus (décor de bord de piste).
+- `gradins.png` : PNG 1024 × 256. Petite tribune vue du dessus avec des spectateurs ronds très simples (pas de visages détaillés).
+- `poussiere.png` : PNG 256 × 256. Petit nuage de poussière beige (la voiture roule dans l’herbe).
+
+Le jeu continue de dessiner la route lui-même : son tracé change à chaque circuit.
+
+## Lot 16 : Vignettes des nouveaux jeux
+
+Archive `la-boite-a-jeux-lot-16.zip`, dossier `vignettes/`. Même format et même style que les 14 vignettes du lot 2 : JPG 640 × 480, une scène qui résume le jeu en un coup d’œil, avec les personnages du lot 1 (mascotte, renard, chien…) et sans texte.
+
+- `oeil-de-lynx.jpg` : deux grandes cartes rondes couvertes de petits dessins ; le même dessin (une étoile) est entouré en vert sur les deux cartes ; un petit lynx à grands yeux regarde par-dessus.
+- `paires-cachees.jpg` : une grille de cartes au dos violet ; deux cartes retournées montrent le même animal ; un enfant-renard lève les bras de joie.
