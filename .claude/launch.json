@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "boite-a-jeux",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["outils/serve.js", ".", "8812"],
+      "port": 8812,
+      "autoPort": false
+    }
+  ]
+}
