@@ -182,6 +182,7 @@ const ICONS = {
   "son-off": `<path d="M4 9.5 H8 L13 5 V19 L8 14.5 H4 Z" fill="currentColor"/><path d="M17 9 L22 15 M22 9 L17 15"/>`,
   plus: `<path d="M12 5 V19 M5 12 H19"/>`,
   croix: `<path d="M6 6 L18 18 M18 6 L6 18"/>`,
+  poubelle: `<path d="M4.5 7 H19.5"/><path d="M9.5 7 V4.5 H14.5 V7"/><path d="M6.5 7 L7.5 20 H16.5 L17.5 7"/><path d="M10.5 11 V16 M13.5 11 V16"/>`,
   reglages: `<circle cx="12" cy="12" r="3.2"/><path d="M12 2.5 V5.5 M12 18.5 V21.5 M2.5 12 H5.5 M18.5 12 H21.5 M5.3 5.3 L7.4 7.4 M16.6 16.6 L18.7 18.7 M5.3 18.7 L7.4 16.6 M16.6 7.4 L18.7 5.3"/>`,
   personnes: `<circle cx="9" cy="8" r="3.2"/><path d="M3 19 Q3 13 9 13 Q15 13 15 19"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 13.4 Q21 13 21 18.5"/>`,
   eclair: `<path d="M13 2 L5 13.5 H11 L10 22 L19 10 H13 Z" fill="currentColor"/>`,

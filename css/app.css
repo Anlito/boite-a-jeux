@@ -929,3 +929,29 @@ h1, h2, h3, h4, p { margin: 0; }
   .podium-steps, .solo-result { grid-area: body; }
   .podium-actions { grid-area: actions; width: 100%; }
 }
+
+/* ---------- Réglages : liste des joueurs ---------- */
+
+.settings-panel h4 { margin: 8px 0 0; }
+.people-list { display: flex; flex-direction: column; gap: 8px; }
+.person-row { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 18px; background: #fff; }
+.person-art { width: 48px; height: 48px; flex: none; border-radius: 50%; background: var(--bg); display: grid; place-items: center; overflow: hidden; }
+.person-art svg, .person-art img { width: 94%; }
+.person-name { flex: 1; display: flex; flex-direction: column; font-weight: 700; font-size: 1.1rem; }
+.person-name small { font-weight: 500; font-size: .85rem; color: var(--muted); }
+.icon-btn.small { width: 44px; height: 44px; color: #C62F2F; }
+.icon-btn.small .icon { width: 22px; height: 22px; }
+.person-row.asking { flex-direction: column; align-items: stretch; background: #FFE9E9; }
+.person-row.asking p { font-weight: 500; }
+.person-confirm { display: flex; gap: 10px; }
+.person-confirm .btn { flex: 1; min-height: 50px; font-size: 1.1rem; }
+.btn.danger { background: #EB5757; color: #fff; box-shadow: 0 5px 0 #BE3434; }
+
+/* Serpentins : joystick (dessin d'aide dans la manette, joystick flottant sous le doigt) */
+.sp-joy { position: relative; flex: none; width: var(--btn); aspect-ratio: 1; border-radius: 50%; background: color-mix(in srgb, var(--seat) 25%, #fff); box-shadow: inset 0 0 0 4px var(--seat); }
+.sp-joy i { position: absolute; left: 50%; top: 50%; width: 46%; aspect-ratio: 1; margin: -23% 0 0 -23%; border-radius: 50%; background: var(--seat); box-shadow: 0 4px 0 var(--seat-deep); animation: sp-wiggle 2.4s ease-in-out infinite; }
+@keyframes sp-wiggle { 0%, 100% { transform: none; } 25% { transform: translate(-30%, -20%); } 60% { transform: translate(30%, 10%); } }
+.sp-stick { position: absolute; z-index: 6; width: 112px; height: 112px; margin: -56px 0 0 -56px; border-radius: 50%; pointer-events: none; background: color-mix(in srgb, var(--seat) 22%, transparent); box-shadow: inset 0 0 0 4px var(--seat); }
+.sp-stick i { position: absolute; left: 31px; top: 31px; width: 50px; height: 50px; border-radius: 50%; background: var(--seat); box-shadow: 0 0 0 4px #fff, 0 6px 12px #0006; }
+.sp-demo-joy { position: relative; width: 84px; height: 84px; border-radius: 50%; background: #DCE9FC; box-shadow: inset 0 0 0 4px #2F80ED; }
+.sp-demo-joy i { position: absolute; left: 22px; top: 22px; width: 40px; height: 40px; border-radius: 50%; background: #2F80ED; box-shadow: 0 4px 0 #1C5DB8; animation: sp-wiggle 3s ease-in-out infinite; }

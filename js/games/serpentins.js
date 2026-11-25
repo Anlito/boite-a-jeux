@@ -53,7 +53,6 @@ const INK = "#2B2350";
 
 const between = (a, b) => a + Math.random() * (b - a);
 const angleGap = (a, b) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
-const ARROW = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 L8 12 L15 19" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
 function mount(root, ctx) {
   const solo = ctx.count === 1;
@@ -73,10 +72,9 @@ function mount(root, ctx) {
     <div class="pads">${players.map((p, i) => p.kind === "human" ? `
       <div class="pad sp-pad pad-${i}" style="--seat:${p.color};--seat-deep:${p.deep};--seat-soft:${p.soft}">
         <div class="pad-inner">
-          <div class="sp-btn" data-dir="-1">${ARROW}</div>
+          <div class="sp-joy" aria-hidden="true"><i></i></div>
           <div class="pad-info"><span class="pad-avatar">${p.art}</span>
             ${solo ? `<span class="pad-round"></span>` : `<span class="pad-pips">${"<i></i>".repeat(GOAL)}</span>`}</div>
-          <div class="sp-btn right" data-dir="1">${ARROW}</div>
         </div>
       </div>` : "").join("")}
     </div>
@@ -129,7 +127,7 @@ function mount(root, ctx) {
         seat: i, p, level: force,
         x: CX + Math.cos(a) * rx, y: CY + Math.sin(a) * ry,
         angle: a + Math.PI / 2 + between(-0.2, 0.2),   // tous tournent dans le même sens autour du centre
-        turn: 0, keys: { "-1": false, "1": false },
+        turn: 0, keys: { "-1": false, "1": false }, aim: null,
         alive: true, jump: 0, portalWait: 0,
         gap: 0, gapTimer: between(2.5, 4),
         lx: null, ly: null,
@@ -239,44 +237,43 @@ function mount(root, ctx) {
     if (!s) return;
     s.keys[dir] = down;
     s.turn = (s.keys["1"] ? 1 : 0) - (s.keys["-1"] ? 1 : 0);
-    padOf(seat)?.querySelector(`.sp-btn[data-dir="${dir}"]`)?.classList.toggle("on", down);
   }
 
-  // Quel bouton ce doigt touche-t-il ? Le plus proche dans la zone du joueur.
-  function buttonFor(seat, clientX, clientY) {
-    if (solo) {
-      const box = node.getBoundingClientRect();
-      return clientX - box.left < box.width / 2 ? -1 : 1;
-    }
-    const buttons = [...(padOf(seat)?.querySelectorAll(".sp-btn") || [])];
-    let best = -1, bestDist = Infinity;
-    for (const b of buttons) {
-      const r = b.getBoundingClientRect();
-      const d = Math.hypot(r.left + r.width / 2 - clientX, r.top + r.height / 2 - clientY);
-      if (d < bestDist) { bestDist = d; best = Number(b.dataset.dir); }
-    }
-    return best;
-  }
-
+  // Joystick : on pose le doigt n'importe où dans sa zone, puis on le fait glisser vers où le serpent
+  // doit aller. Le joystick apparaît sous le doigt. Doigt levé : le serpent continue tout droit.
+  const DEAD = 12, REACH = 46;
   const fingers = new Map();
+  function aimFrom(stick, x, y) {
+    const dx = x - stick.x0, dy = y - stick.y0, dist = Math.hypot(dx, dy);
+    const k = dist > REACH ? REACH / dist : 1;
+    stick.knob.style.transform = `translate(${dx * k}px, ${dy * k}px)`;
+    if (dist > DEAD && snakes[stick.seat]) snakes[stick.seat].aim = Math.atan2(dy, dx);
+  }
   const onDown = event => {
     if (phase === "done") return;
     const seat = solo ? 0 : seatAt(players.length, event.clientX, event.clientY, node.getBoundingClientRect());
-    if (players[seat]?.kind !== "human") return;
+    if (players[seat]?.kind !== "human" || [...fingers.values()].some(f => f.seat === seat)) return;
     event.preventDefault();
-    const dir = buttonFor(seat, event.clientX, event.clientY);
-    fingers.set(event.pointerId, { seat, dir });
+    const box = node.getBoundingClientRect();
+    const el = h(`<div class="sp-stick" style="left:${event.clientX - box.left}px;top:${event.clientY - box.top}px;--seat:${players[seat].color}"><i></i></div>`);
+    node.append(el);
+    fingers.set(event.pointerId, { seat, x0: event.clientX, y0: event.clientY, el, knob: el.firstElementChild });
     try { node.setPointerCapture(event.pointerId); } catch { /* doigt déjà relâché */ }
-    setKey(seat, dir, true);
   };
-  const onUp = event => {
-    const finger = fingers.get(event.pointerId);
-    if (!finger) return;
-    fingers.delete(event.pointerId);
-    // Un autre doigt peut encore tenir le même bouton.
-    if (![...fingers.values()].some(f => f.seat === finger.seat && f.dir === finger.dir)) setKey(finger.seat, finger.dir, false);
+  const onMove = event => {
+    const stick = fingers.get(event.pointerId);
+    if (stick) aimFrom(stick, event.clientX, event.clientY);
   };
+  const release = id => {
+    const stick = fingers.get(id);
+    if (!stick) return;
+    fingers.delete(id);
+    stick.el.remove();
+    if (snakes[stick.seat]) snakes[stick.seat].aim = null;
+  };
+  const onUp = event => release(event.pointerId);
   node.addEventListener("pointerdown", onDown);
+  node.addEventListener("pointermove", onMove);
   ["pointerup", "pointercancel", "lostpointercapture"].forEach(type => node.addEventListener(type, onUp));
   // Clavier pour tester sur ordinateur : flèches = Bleu, Q / D = Rouge.
   const keyMap = { ArrowLeft: [0, -1], ArrowRight: [0, 1], q: [1, -1], d: [1, 1] };
@@ -360,7 +357,9 @@ function mount(root, ctx) {
     const steps = Math.max(1, Math.ceil(dist / 2));
     const sdt = dt / steps, sd = dist / steps;
     for (let k = 0; k < steps && s.alive; k++) {
-      s.angle += s.turn * TURN * sdt;
+      // Joystick : le serpent tourne vers la direction montrée par le doigt.
+      if (s.aim !== null) { const gap = angleGap(s.aim, s.angle); s.angle += Math.sign(gap) * Math.min(Math.abs(gap), TURN * 1.15 * sdt); }
+      else s.angle += s.turn * TURN * sdt;
       s.x += Math.cos(s.angle) * sd;
       s.y += Math.sin(s.angle) * sd;
       if (hits(s)) { kill(s); return; }
@@ -578,7 +577,7 @@ function mount(root, ctx) {
     start() { setupRound(); loop.start(); },
     pause() {
       loop.stop();
-      fingers.clear();
+      [...fingers.keys()].forEach(release);
       snakes.forEach(s => { if (s.p.kind === "human") { setKey(s.seat, -1, false); setKey(s.seat, 1, false); } });
     },
     resume() { loop.start(); },
@@ -600,7 +599,7 @@ function demo() {
       <path class="sp-demo-red" d="M190 30 C 120 30, 120 110, 60 110" fill="none" stroke="#EB5757" stroke-width="7" stroke-linecap="round"/>
       <path class="sp-demo-blue" d="M30 40 C 80 40, 110 60, 110 120" fill="none" stroke="#2F80ED" stroke-width="7" stroke-linecap="round"/>
     </svg>
-    <div class="sp-demo-btns"><span class="sp-demo-btn">${ARROW}</span><span class="sp-demo-btn right">${ARROW}</span></div>
+    <div class="sp-demo-joy"><i></i></div>
   </div>`);
   return { node, stop() {} };
 }
@@ -622,8 +621,8 @@ export default {
   </svg>`,
   rules: {
     text: session => session.count === 1
-      ? "Ton serpent avance tout seul et laisse une trace. Appuie à gauche ou à droite de l'écran pour tourner. Ne touche ni les bords ni les traces ! Mange une pomme pour sauter par-dessus."
-      : `Chaque serpent avance tout seul et laisse une trace. Tes deux boutons font tourner à gauche et à droite. Ne touche ni les bords ni les traces : le dernier serpent en vie gagne la manche. ${GOAL} manches pour gagner !`,
+      ? "Ton serpent avance tout seul et laisse une trace. Pose ton doigt sur l'écran et fais-le glisser vers où ton serpent doit aller. Ne touche ni les bords ni les traces ! Mange une pomme pour sauter par-dessus."
+      : `Chaque serpent avance tout seul et laisse une trace. Pose ton doigt dans ta zone et fais-le glisser vers où ton serpent doit aller. Ne touche ni les bords ni les traces : le dernier serpent en vie gagne la manche. ${GOAL} manches pour gagner !`,
     demo
   },
   levels: LEVELS,

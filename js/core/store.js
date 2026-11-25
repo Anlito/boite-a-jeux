@@ -31,6 +31,16 @@ export const store = {
     return profile;
   },
 
+  // Supprime un joueur avec ses pièces, ses autocollants et ses résultats.
+  removeProfile(id) {
+    data.profiles = data.profiles.filter(p => p.id !== id);
+    delete data.results[id];
+    for (const setup of Object.values(data.last)) {
+      if (setup?.seats) setup.seats = setup.seats.map(seat => seat?.kind === "human" && seat.profileId === id ? null : seat);
+    }
+    save();
+  },
+
   setting(name, value) {
     data.settings[name] = value;
     save();

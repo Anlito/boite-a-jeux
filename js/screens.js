@@ -44,24 +44,46 @@ export function home(app) {
     </section>
   </main>`);
   on(node, "[data-game]", "click", (_, card) => app.go("count", { game: gameById(card.dataset.game) }));
-  node.querySelector(".settings").addEventListener("click", () => openSettings());
+  node.querySelector(".settings").addEventListener("click", () => openSettings(app));
   node.querySelector(".album-btn").addEventListener("click", () => app.go("album"));
   return { node };
 }
 
-function openSettings() {
+function openSettings(app) {
   const content = h(`<div class="settings-panel">
     <h3>Réglages</h3>
     <label class="toggle"><span>${icon("son-on")} Bruitages</span><input type="checkbox" data-setting="sound"></label>
     <label class="toggle"><span>${icon("personnes")} Voix qui lit les règles</span><input type="checkbox" data-setting="voice"></label>
-    <button class="btn wide">Fermer</button>
+    <h4>Joueurs</h4>
+    <div class="people-list"></div>
+    <button class="btn wide close-settings">Fermer</button>
   </div>`);
+  const list = content.querySelector(".people-list");
+  // Liste des joueurs, avec une poubelle ; la suppression demande une confirmation.
+  function renderPeople(asking = null) {
+    if (!store.profiles.length) { list.innerHTML = `<p class="hint">Aucun joueur pour l’instant.</p>`; return; }
+    list.innerHTML = store.profiles.map(p => {
+      const stickers = Object.keys(p.stickers || {}).length;
+      if (p.id === asking) return `<div class="person-row asking">
+        <p>Supprimer <b>${p.name}</b> ? Ses pièces et ses autocollants seront perdus.</p>
+        <div class="person-confirm"><button class="btn keep" data-keep>Non</button><button class="btn danger" data-remove="${p.id}">${icon("poubelle")} Supprimer</button></div>
+      </div>`;
+      return `<div class="person-row"><span class="person-art">${avatarArt(p.avatar)}</span>
+        <span class="person-name">${p.name}<small>${p.coins || 0} pièce${(p.coins || 0) > 1 ? "s" : ""} · ${stickers} autocollant${stickers > 1 ? "s" : ""}</small></span>
+        <button class="icon-btn small" data-ask="${p.id}" aria-label="Supprimer ${p.name}" title="Supprimer ${p.name}">${icon("poubelle")}</button>
+      </div>`;
+    }).join("");
+    on(list, "[data-ask]", "click", (_, b) => renderPeople(b.dataset.ask));
+    on(list, "[data-keep]", "click", () => renderPeople());
+    on(list, "[data-remove]", "click", (_, b) => { store.removeProfile(b.dataset.remove); renderPeople(); });
+  }
+  renderPeople();
   content.querySelectorAll("[data-setting]").forEach(input => {
     input.checked = store.settings[input.dataset.setting];
     input.addEventListener("change", () => store.setting(input.dataset.setting, input.checked));
   });
   const dialog = modal(content);
-  content.querySelector(".btn").addEventListener("click", dialog.close);
+  content.querySelector(".close-settings").addEventListener("click", () => { dialog.close(); if (document.querySelector(".screen.home")) app.go("home"); });
 }
 
 /* ---------- Combien de joueurs ? ---------- */
