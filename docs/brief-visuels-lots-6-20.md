@@ -1,4 +1,4 @@
-# La boîte à jeux : brief des visuels, lots 6 à 16
+# La boîte à jeux : brief des visuels, lots 6 à 20
 
 Les lots 1 à 5 sont intégrés : éléments communs, 14 vignettes, Top départ, Sumo-bulles et Les canons.
 Les jeux ci-dessous dessinent encore leurs images eux-mêmes. Un lot par jeu, à demander **un par un**
@@ -6,9 +6,11 @@ Les jeux ci-dessous dessinent encore leurs images eux-mêmes. Un lot par jeu, à
 
 Les lots 13 à 16 concernent les jeux ajoutés ensuite (Œil de lynx, Paires cachées, Petits bolides). Le lot 13 passe en premier parmi eux : ses dessins servent à deux jeux, et ils remplacent les emojis, dont l’aspect change d’un téléphone à l’autre.
 
+Les lots 17 à 20 complètent les jeux qui n’avaient encore rien demandé : vignettes de Palet glissant et Quatre à la suite (17), La tour bancale (18), L’orchestre (19, remplace aussi des emojis) et, facultatif, les pièces de Palet glissant et de Quatre à la suite (20).
+
 ## À coller en tête de chaque demande
 
-> Même style que la planche de style validée et que les lots 1 à 5 de « La boîte à jeux » : formes rondes et douces, contour violet foncé #2B2350 régulier, couleurs pastel, petits reflets blancs, aucun texte ni chiffre dans les images.
+> Même style que la planche de style validée et que les lots déjà livrés de « La boîte à jeux » : formes rondes et douces, contour violet foncé #2B2350 régulier, couleurs pastel, petits reflets blancs, aucun texte ni chiffre dans les images.
 > Objets : PNG 512 × 512, fond vraiment transparent, objet centré avec une marge d'environ 10 %.
 > Décors : JPG aux dimensions indiquées, sans personnage.
 > Couleurs des joueurs : bleu #2F80ED, rouge #EB5757, vert #27AE60, jaune #F2C94C.
@@ -151,3 +153,45 @@ Archive `la-boite-a-jeux-lot-16.zip`, dossier `vignettes/`. Même format et mêm
 
 - `oeil-de-lynx.jpg` : deux grandes cartes rondes couvertes de petits dessins ; le même dessin (une étoile) est entouré en vert sur les deux cartes ; un petit lynx à grands yeux regarde par-dessus.
 - `paires-cachees.jpg` : une grille de cartes au dos violet ; deux cartes retournées montrent le même animal ; un enfant-renard lève les bras de joie.
+
+## Lot 17 : Vignettes de Palet glissant et Quatre à la suite
+
+Archive `la-boite-a-jeux-lot-17.zip`, dossier `vignettes/`. Même format et même style que les vignettes des lots 2 et 16 : JPG 640 × 480, une scène qui résume le jeu en un coup d’œil, avec les personnages du lot 1 (mascotte, renard, chien…) et sans texte.
+
+- `palet-glissant.jpg` : une table de hockey sur coussin d’air bleu ciel, vue d’en haut et un peu de biais, avec une ligne au milieu et un but de chaque côté. Deux crosses rondes, une bleue et une rouge. Un palet violet file vers le but, avec un petit trait de vitesse. Un enfant-chien se penche sur la table, tout concentré.
+- `quatre-a-la-suite.jpg` : une grille verticale violette percée de trous ronds, de face, avec des jetons bleus et rouges. Quatre jetons bleus alignés en biais brillent. Un jeton tombe dans une colonne. La mascotte lève le poing de joie à côté de la grille.
+
+## Lot 18 : La tour bancale
+
+Archive `la-boite-a-jeux-lot-18.zip`, dossier `tour-bancale/`. Tout est vu de face, de côté. Les étages s’empilent les uns sur les autres et le jeu change leur largeur : leur façade doit rester belle si on l’étire un peu en largeur.
+
+- `etage-rose.png`, `etage-jaune.png`, `etage-vert.png`, `etage-bleu.png`, `etage-violet.png`, `etage-orange.png` : PNG 768 × 256. Un étage d’immeuble rigolo, trois fois plus large que haut, aux coins arrondis, avec une rangée de fenêtres régulières, sans toit et sans porte. Couleurs : rose #FF9AA8, jaune #FFD36B, vert #8FD6A7, bleu #8EC5FF, violet #C5A8FF, orange #FFB27A. Les bords du haut et du bas sont droits, pour que les étages se posent bien l’un sur l’autre.
+- `socle.png` : PNG 768 × 256. Le rez-de-chaussée en pierre violet-gris, avec une porte au milieu.
+- `toit.png` : PNG 768 × 256. Toit rouge en pente, posé sur le dernier étage, avec une petite cheminée. Le bas du toit est droit et prend toute la largeur de l’image.
+- `crochet.png` : PNG 256 × 256. Chariot de grue gris avec un crochet jaune en dessous, vu de face.
+- `grue.png` : PNG 1024 × 128. Bras de grue jaune en treillis, horizontal. Il doit **se répéter sans raccord visible** quand on pose plusieurs images bout à bout.
+- `nuage.png` : PNG 512 × 256. Petit nuage blanc et dodu.
+- `fond-ville.jpg` : 1080 × 1920, en hauteur. Le cinquième du bas montre de l’herbe et, au loin, une ville pastel aux immeubles bleu clair. Le reste est un ciel de jour bleu clair et dégagé, où la tour va monter.
+- `fond-espace.jpg` : 1080 × 1920, en hauteur. Ciel de nuit violet avec des étoiles et une petite planète dans un coin (quand la tour est très haute). Il doit pouvoir se répéter en hauteur sans raccord visible.
+
+## Lot 19 : L’orchestre
+
+Archive `la-boite-a-jeux-lot-19.zip`, dossier `orchestre/`. Ces dessins remplacent les emojis, dont l’aspect change d’un téléphone à l’autre. Chaque instrument est posé sur un gros bouton rond de sa couleur, qui s’allume quand il joue : il doit ressortir sur un fond coloré, avec un contour bien visible.
+
+- `piano.png` : petit piano droit rouge #EB5757, de face, touches blanches et noires bien visibles.
+- `tambour.png` : tambour bleu #2F80ED, avec deux baguettes croisées dessus.
+- `trompette.png` : trompette dorée jaune #F2C94C, de profil, pavillon vers la droite.
+- `guitare.png` : guitare verte #27AE60, debout, un peu penchée.
+- `saxophone.png` : saxophone violet #B983FF, de profil.
+- `violon.png` : violon orange #FF9F43 avec son archet en travers.
+- `note.png` : PNG 256 × 256. Note de musique blanche et dodue, qui s’envole quand un instrument joue.
+- `fond-scene.jpg` : 1920 × 1080. Scène de théâtre pastel avec des rideaux violets ouverts sur les côtés, un plancher en bois en bas et quelques spots lumineux en haut. Le centre est dégagé (les instruments s’y posent).
+
+## Lot 20 (facultatif) : Palet glissant et Quatre à la suite
+
+Archive `la-boite-a-jeux-lot-20.zip`, dossiers `palet-glissant/` et `quatre-a-la-suite/`. Tout est vu du dessus. Ces deux jeux sont surtout une table et une grille, que le jeu dessine lui-même : ce lot apporte peu.
+
+- `palet-glissant/crosse-bleu.png`, `crosse-rouge.png` : PNG 256 × 256. Crosse de hockey sur coussin d’air, vue du dessus : un disque épais de la couleur du joueur, avec une poignée ronde au centre plus foncée. Rien sur la poignée : le jeu y pose l’avatar de l’enfant.
+- `palet-glissant/palet.png` : PNG 256 × 256. Palet rond violet foncé, vu du dessus, avec un liseré brillant.
+- `palet-glissant/plot.png` : PNG 256 × 256. Plot rond rose et blanc, vu du dessus, comme un champignon rebondissant (obstacle au milieu de la table).
+- `quatre-a-la-suite/jeton-bleu.png`, `jeton-rouge.png` : PNG 256 × 256. Jeton rond et brillant, vu de face, de la couleur du joueur, avec un cercle en relief au centre.
