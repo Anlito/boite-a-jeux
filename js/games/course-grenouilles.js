@@ -1,6 +1,6 @@
 // Course des grenouilles : sauter par-dessus les obstacles, ramasser des pièces.
 // Un couloir par joueur, le même parcours pour tous. Touche ton couloir pour sauter, une deuxième fois en l'air pour un double saut.
-import { SEATS, robotArt, icon } from "../core/art.js";
+import { SEATS, robotArt, icon, hasImage, imagePath } from "../core/art.js";
 import { play, say } from "../core/sound.js";
 import { h } from "../core/ui.js";
 import { createStage, createLoop, artImage, text, createParticles } from "../core/stage.js";
@@ -9,6 +9,16 @@ const W = 1600, H = 900;
 const FROG_X = 230, GROUND = 250, LANE = 300;     // repère d'un couloir : 300 unités de haut, sol à 250
 const JUMP = 760, DOUBLE = 640, GRAVITY = 1750;
 const HEARTS = 3;
+// Images du lot 7 (null si absentes : on garde le dessin). Partie visible de chaque image, sur 512.
+const picture = name => hasImage(`course-grenouilles/${name}`) ? artImage(`<img src="${imagePath(`course-grenouilles/${name}`)}">`) : null;
+const ready = img => img && img.complete && img.naturalWidth;
+const ART = {
+  puddle: ["flaque", [52, 210, 408, 90]], snail: ["escargot", [52, 90, 408, 332]], mushrooms: ["champignons", [52, 72, 408, 366]],
+  boot: ["botte", [52, 62, 408, 386]], duck: ["canard", [58, 52, 396, 408]], hedgehog: ["herisson", [52, 88, 408, 334]],
+  log: ["tronc", [188, 52, 134, 408]], bee: ["abeille", [52, 62, 408, 386]], coin: ["piece", [56, 52, 400, 408]],
+  lily: ["nenuphar", [52, 158, 408, 194]], flag: ["drapeau-arrivee", [94, 52, 322, 408]]
+};
+const FROG_BOX = { sit: [78, 52, 354, 408], jump: [52, 84, 408, 342] };
 // Obstacles. type : "sol" (sauter par-dessus), "haut" (double saut obligatoire),
 // "abeille" (en l'air entre y0 et y1 : haute = rester au sol, basse = sauter), "mare" (un trou d'eau à franchir en l'air).
 const KINDS = {
@@ -53,6 +63,19 @@ function mount(root, ctx) {
   const setup = solo ? (ctx.level || FREE) : MULTI;
   const people = solo ? [ctx.seats[0]] : ctx.seats;
   const lanes = people.length;
+  const IMG = Object.fromEntries(Object.entries(ART).map(([k, [name, box]]) => [k, { img: picture(`${name}.png`), box }]));
+  const BG = picture("fond-mare.jpg");
+  const FROGS = Object.fromEntries(SEATS.map(seat => [seat.name, {
+    sit: picture(`grenouille-${seat.name.toLowerCase()}.png`), jump: picture(`grenouille-${seat.name.toLowerCase()}-saut.png`)
+  }]));
+  // Dessine la partie visible d'une image dans une boîte, posée en bas et centrée, sans la déformer.
+  function art(entry, x, y, w, h, alignBottom = true) {
+    if (!entry || !ready(entry.img)) return false;
+    const k = entry.img.naturalWidth / 512, [sx, sy, sw, sh] = entry.box;
+    const scale = Math.min(w / sw, h / sh), dw = sw * scale, dh = sh * scale;
+    g.drawImage(entry.img, sx * k, sy * k, sw * k, sh * k, x + (w - dw) / 2, alignBottom ? y + h - dh : y + (h - dh) / 2, dw, dh);
+    return true;
+  }
   const laneH = H / lanes;
   const s = Math.min(2.4, laneH / LANE);                 // échelle d'un couloir
   const view = W / s;                                    // largeur visible, en unités
@@ -258,11 +281,20 @@ function mount(root, ctx) {
     g.beginPath(); g.rect(0, top, W, laneH); g.clip();
     g.translate(0, top);
     g.scale(s, s);
+    if (ready(BG)) {
+      const tile = LANE * BG.naturalWidth / BG.naturalHeight;
+      const shift = (distance * 0.25) % tile;
+      for (let x = -shift; x < view; x += tile) g.drawImage(BG, x, 0, tile + 1, LANE);
+      g.fillStyle = "#B9D79A"; g.fillRect(0, GROUND, view, LANE - GROUND);
+      g.fillStyle = "#CFE3B3"; g.fillRect(0, GROUND, view, 10);
+      g.fillStyle = "#2B2350"; g.fillRect(0, GROUND - 1.5, view, 3);
+    } else {
     g.fillStyle = theme.sky; g.fillRect(0, 0, view, LANE);
     hills(GROUND - 120, distance * 0.15, theme.far, 60);
     hills(GROUND - 60, distance * 0.4, theme.near, 34);
     g.fillStyle = theme.earth; g.fillRect(0, GROUND, view, LANE - GROUND);
     g.fillStyle = theme.grass; g.fillRect(0, GROUND - 4, view, 12);
+    }
     // Mares : on creuse le sol.
     for (const o of course) {
       if (KINDS[o.kind].type !== "mare") continue;
@@ -270,12 +302,18 @@ function mount(root, ctx) {
       if (x + o.w < -20 || x > view) continue;
       g.fillStyle = "#2E7FA3"; g.fillRect(x, GROUND - 4, o.w, LANE - GROUND + 4);
       g.fillStyle = "#78D7DE"; g.fillRect(x, GROUND + 6, o.w, 10);
-      g.fillStyle = "#7CC86B"; g.beginPath(); g.ellipse(x + o.w * 0.5, GROUND + 10, 16, 5, 0, 0, Math.PI * 2); g.fill();
+      if (ready(BG)) {
+        g.fillStyle = "#B7DAFB"; g.fillRect(x, GROUND - 1.5, o.w, LANE - GROUND + 2);
+        g.fillStyle = "#2B2350"; g.fillRect(x - 1.5, GROUND - 1.5, 3, LANE - GROUND); g.fillRect(x + o.w - 1.5, GROUND - 1.5, 3, LANE - GROUND);
+        g.fillStyle = "#ffffffcc"; g.beginPath(); g.ellipse(x + o.w * 0.3, GROUND + 18, 12, 3, 0, 0, Math.PI * 2); g.fill();
+        art(IMG.lily, x + o.w * 0.5 - 28, GROUND - 6, 56, 26, false);
+      } else { g.fillStyle = "#7CC86B"; g.beginPath(); g.ellipse(x + o.w * 0.5, GROUND + 10, 16, 5, 0, 0, Math.PI * 2); g.fill(); }
     }
     // Ligne d'arrivée
     if (finishAt) {
       const fx = finishAt - distance + FROG_X;
-      if (fx < view + 40) {
+      if (fx < view + 40 && art(IMG.flag, fx - 40, GROUND - 210, 110, 212)) { /* drapeau du lot */ }
+      else if (fx < view + 40) {
         for (let k = 0; k < 10; k++) { g.fillStyle = k % 2 ? "#fff" : "#2B2350"; g.fillRect(fx, GROUND - 200 + k * 20, 16, 20); }
         g.fillStyle = "#EB5757"; g.beginPath(); g.moveTo(fx + 16, GROUND - 200); g.lineTo(fx + 70, GROUND - 180); g.lineTo(fx + 16, GROUND - 160); g.fill();
       }
@@ -289,8 +327,10 @@ function mount(root, ctx) {
       if (c.taken.has(r)) continue;
       const x = c.x - distance;
       if (x < -20 || x > view) continue;
+      if (!art(IMG.coin, x - 16, GROUND - c.height - 16, 32, 32, false)) {
       g.fillStyle = "#FFC83D"; g.beginPath(); g.arc(x, GROUND - c.height, 13, 0, Math.PI * 2); g.fill();
       g.strokeStyle = "#E59A00"; g.lineWidth = 3; g.stroke();
+      }
     }
     // Grenouille
     g.fillStyle = "#12302B44";
@@ -333,6 +373,7 @@ function mount(root, ctx) {
     if (info.type === "mare") return;
     if (info.type === "abeille") {
       const by = y - (info.y0 + info.y1) / 2 + Math.sin(performance.now() / 120 + o.at) * 4;
+      if (art(IMG.bee, x - 8, by - 30, w + 16, 60, false)) return;
       g.fillStyle = "#ffffffcc";
       g.beginPath(); g.ellipse(x + 16, by - 14, 10, 14, -0.5, 0, Math.PI * 2); g.ellipse(x + 30, by - 14, 10, 14, 0.5, 0, Math.PI * 2); g.fill();
       oval(x + 22, by, 22, 15, "#FFC83D");
@@ -340,6 +381,7 @@ function mount(root, ctx) {
       oval(x + 4, by - 2, 3, 3, "#2B2350");
       return;
     }
+    if (info.type === "haut" && art(IMG.log, x - 10, y - hh - 4, w + 20, hh + 6)) return;
     if (info.type === "haut") {
       g.fillStyle = "#8B5E3C"; g.beginPath(); g.roundRect(x, y - hh, w, hh, 10); g.fill();
       g.strokeStyle = "#6B4A2A"; g.lineWidth = 3;
@@ -349,6 +391,9 @@ function mount(root, ctx) {
       g.fillStyle = "#6CBF5A"; g.beginPath(); g.ellipse(x + w - 4, y - hh * 0.6, 12, 6, 0.6, 0, Math.PI * 2); g.fill();
       return;
     }
+    // Obstacles du lot : un peu plus grands que la zone de choc, posés sur le sol.
+    const pic = { puddle: IMG.puddle, snail: IMG.snail, mushrooms: IMG.mushrooms, boot: IMG.boot, duck: IMG.duck, hedgehog: IMG.hedgehog }[o.kind];
+    if (o.kind === "puddle" ? art(pic, x - 6, y - 14, w + 12, 18) : art(pic, x - 8, y - hh * 1.25, w + 16, hh * 1.25 + 2)) return;
     if (o.kind === "puddle") { oval(x + w / 2, y, w / 2, 8, "#286379"); oval(x + w / 2, y - 3, w * 0.45, 6, "#78D7DE"); }
     else if (o.kind === "snail") { oval(x + w / 2, y - 7, w * 0.48, 8, "#DFBF53"); oval(x + 18, y - 17, 15, 15, "#DC8750"); oval(x + 38, y - 15, 8, 10, "#F9D36B"); oval(x + 37, y - 26, 2.5, 4, "#3E3940"); }
     else if (o.kind === "duck") { oval(x + 24, y - 13, 23, 13, "#FFCD56"); oval(x + 40, y - 26, 12, 11, "#FFE37A"); oval(x + 52, y - 25, 7, 4, "#E77740"); oval(x + 43, y - 29, 2.4, 2.4, "#283043"); }
@@ -358,6 +403,18 @@ function mount(root, ctx) {
   }
 
   function drawFrog(x, y, r) {
+    const frog = FROGS[r.p.name];
+    const jumping = r.y > 4, img = frog && (jumping ? frog.jump : frog.sit);
+    if (ready(img)) {
+      g.save();
+      g.translate(x, y + 20);                     // y + 20 : le sol sous la grenouille
+      if (r.hit > 0) g.rotate(Math.sin(r.hit * 33) * 0.16);
+      const [sx, sy, sw, sh] = jumping ? FROG_BOX.jump : FROG_BOX.sit, k = img.naturalWidth / 512;
+      const dh = jumping ? 58 : 70, dw = sw * dh / sh;
+      g.drawImage(img, sx * k, sy * k, sw * k, sh * k, -dw / 2, -dh, dw, dh);
+      g.restore();
+      return;
+    }
     g.save();
     g.translate(x, y);
     if (r.hit > 0) g.rotate(Math.sin(r.hit * 33) * 0.16);

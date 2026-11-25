@@ -109,6 +109,13 @@ function mount(root, ctx) {
     m.ai.wait -= dt;
     if (m.ai.wait > 0) return;
     m.ai.wait = brain.react;
+    if (pucks.some(q => (q.stuck || 0) > 0.35 && Math.hypot(q.x - m.x, q.y - m.y) < m.r + PUCK + 60)) {
+      const q = pucks.find(q2 => (q2.stuck || 0) > 0.35);
+      const dx = m.x - q.x, dy = m.y - q.y, d = Math.hypot(dx, dy) || 1;
+      m.tx = m.x + dx / d * 160 + (TW / 2 - m.x) * 0.3; m.ty = m.y + dy / d * 160;
+      m.ai.wait = 0.6;
+      return;
+    }
     const fy = y => (m.seat === 0 ? TL - y : y);
     const mine = pucks.map(q => ({ x: q.x, y: fy(q.y), vy: m.seat === 0 ? -q.vy : q.vy }));
     // Le palet le plus dangereux : le plus proche de son but.
@@ -120,6 +127,9 @@ function mount(root, ctx) {
       const aimX = TW / 2 + between(-GOAL / 2, GOAL / 2) * (1 - brain.aim);
       const dx = aimX - p.x, dy = TL - p.y, d = Math.hypot(dx, dy) || 1;
       const behind = { x: p.x - dx / d * (PUCK + m.r * 0.6), y: p.y - dy / d * (PUCK + m.r * 0.6) };
+      // Palet collé à un bord : impossible de passer derrière. Le robot retourne défendre et laisse le palet repartir.
+      const reachable = behind.x > WALL + m.r * 0.8 && behind.x < TW - WALL - m.r * 0.8 && behind.y > WALL + m.r * 0.8;
+      if (!reachable) { m.tx = TW / 2 + (p.x - TW / 2) * 0.3; m.ty = fy(200); return; }
       const ready = Math.hypot(me.x - behind.x, me.y - behind.y) < 50;
       tx = ready ? p.x + dx / d * 120 : behind.x;
       ty = ready ? p.y + dy / d * 120 : behind.y;
@@ -163,6 +173,30 @@ function mount(root, ctx) {
     for (const m of mallets) if (hitCircle(p, m.x, m.y, m.r, m.vx, m.vy, 0.85)) {
       play("tap");
       particles.burst(p.x, p.y, "#ffffff", { count: 6, speed: 220, size: 6, life: 0.3 });
+    }
+    // Le palet reste sur la table : si une crosse l'écrase contre un bord, c'est la crosse qui recule.
+    const inMouth = Math.abs(p.x - TW / 2) < GOAL / 2 - PUCK * 0.4;
+    if (p.x <= WALL + PUCK) { p.x = WALL + PUCK; p.vx = Math.abs(p.vx) * 0.5; }
+    if (p.x >= TW - WALL - PUCK) { p.x = TW - WALL - PUCK; p.vx = -Math.abs(p.vx) * 0.5; }
+    if (!inMouth && p.y <= WALL + PUCK) { p.y = WALL + PUCK; p.vy = Math.abs(p.vy) * 0.5; }
+    if (!inMouth && p.y >= TL - WALL - PUCK) { p.y = TL - WALL - PUCK; p.vy = -Math.abs(p.vy) * 0.5; }
+    for (const m of mallets) {
+      const dx = m.x - p.x, dy = m.y - p.y, d = Math.hypot(dx, dy) || 1, min = m.r + PUCK;
+      if (d < min) { m.x = p.x + dx / d * min; m.y = p.y + dy / d * min; }
+    }
+    // Palet presque arrêté contre un bord depuis un moment : petite poussée vers le milieu.
+    const nearEdge = p.x < WALL + PUCK + 90 || p.x > TW - WALL - PUCK - 90 || p.y < WALL + PUCK + 90 || p.y > TL - WALL - PUCK - 90;
+    // Bloqué = il reste au même endroit (il peut trembler très vite sans avancer).
+    if (!p.anchor || Math.hypot(p.x - p.anchor.x, p.y - p.anchor.y) > 70) p.anchor = { x: p.x, y: p.y, t: 0 };
+    p.anchor.t += dt;
+    p.stuck = nearEdge ? p.anchor.t : 0;
+    if (p.stuck > 1.4) {
+      const dx = TW / 2 - p.x, dy = (p.y < TL / 2 ? TL * 0.3 : TL * 0.7) - p.y, d = Math.hypot(dx, dy) || 1;
+      p.x += dx / d * 30; p.y += dy / d * 30;
+      p.vx = dx / d * 520; p.vy = dy / d * 520; p.stuck = 0; p.anchor = null;
+      // Les crosses trop proches s'écartent pour laisser partir le palet.
+      for (const m of mallets) { const mx = m.x - p.x, my = m.y - p.y, md = Math.hypot(mx, my) || 1; if (md < m.r + PUCK + 50) { m.x += mx / md * 60; m.y += my / md * 60; } }
+      particles.burst(p.x, p.y, "#7FD0F2", { count: 10, speed: 180, size: 7, life: 0.4 });
     }
   }
   function bump(p) { if (Math.hypot(p.vx, p.vy) > 300) play("tap"); }
