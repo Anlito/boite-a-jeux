@@ -17,6 +17,9 @@ Application web installable, sans compte, sans publicité, qui fonctionne hors l
 | Serpentins | 1 à 4, robots (deux boutons : gauche, droite) | Jouable |
 | Patate chaude | 1 à 4, robots (mini-défis pour renvoyer la bombe) | Jouable |
 | Calcul-éclair | 1 à 4, robots (niveau choisi par chacun, du « petit » au CE2 : additions, soustractions, tables de 2 et 3) | Jouable |
+| Œil de lynx | 1 à 4, robots (trouver le dessin commun entre deux cartes) | Jouable |
+| Paires cachées | 1 à 4, robots, chacun son tour (jeu de mémoire) | Jouable |
+| Petits bolides | 1 à 4, robots (course sur 10 circuits, joystick) | Jouable |
 
 En solo, chaque jeu a 10 niveaux dessinés à la main (une étoile débloque le suivant) puis un défi libre, ouvert après le niveau 5.
 

@@ -955,3 +955,101 @@ h1, h2, h3, h4, p { margin: 0; }
 .sp-stick i { position: absolute; left: 31px; top: 31px; width: 50px; height: 50px; border-radius: 50%; background: var(--seat); box-shadow: 0 0 0 4px #fff, 0 6px 12px #0006; }
 .sp-demo-joy { position: relative; width: 84px; height: 84px; border-radius: 50%; background: #DCE9FC; box-shadow: inset 0 0 0 4px #2F80ED; }
 .sp-demo-joy i { position: absolute; left: 22px; top: 22px; width: 40px; height: 40px; border-radius: 50%; background: #2F80ED; box-shadow: 0 4px 0 #1C5DB8; animation: sp-wiggle 3s ease-in-out infinite; }
+
+/* ---------- Œil de lynx ---------- */
+
+.ol { position: absolute; inset: 0; display: grid; grid-template-rows: 1fr 1fr; gap: 6px; background: var(--ink); --big: min(40vmin, 300px); }
+.ol.n1 { grid-template-areas: "center" "p0"; background: #E3F4FF; }
+.ol.n2 { grid-template-areas: "p1" "p0"; }
+.ol.n3 { grid-template-areas: "p1 p1" "p0 p2"; grid-template-columns: 1fr 1fr; }
+.ol.n4 { grid-template-areas: "p3 p1" "p0 p2"; grid-template-columns: 1fr 1fr; }
+.ol:not(.n1) { --big: min(30vmin, 240px); }
+@media (orientation: landscape) {
+  .ol.n1 { grid-template-areas: "center p0"; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr; }
+  .ol.n2 { grid-template-areas: "p1 p0"; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr; }
+  .ol.n2 .ol-space { display: none; }
+  .ol.n2 .ol-mine { margin-left: calc(var(--big) * 0.55); }
+}
+.ol-center { z-index: 3; display: grid; place-items: center; pointer-events: none; }
+.ol:not(.n1) .ol-center { position: absolute; left: 50%; top: 50%; translate: -50% -50%; width: var(--big); height: var(--big); }
+.ol.n1 .ol-center { grid-area: center; }
+.ol-zone { position: relative; overflow: hidden; background: var(--seat-soft); box-shadow: inset 0 0 0 6px var(--seat); transition: background .2s; }
+.ol-zone.won { background: color-mix(in srgb, var(--seat) 30%, #fff); }
+.ol-zone.locked .ol-card { filter: grayscale(.8); opacity: .6; }
+.ol-inner { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 10px 14px 12px; }
+.ol-zone.top .ol-inner { transform: rotate(180deg); }
+.ol-space { flex: none; height: calc(var(--big) * 0.5); }
+.ol.n1 .ol-space { display: none; }
+.ol-mine { flex: 1; min-height: 0; display: grid; place-items: center; container-type: size; }
+.ol-head { flex: none; display: flex; align-items: center; gap: 8px; }
+.ol.n1 .ol-head { padding-left: 54px; }
+.ol-avatar { width: 40px; height: 40px; flex: none; border-radius: 50%; background: #fff; box-shadow: 0 0 0 3px var(--seat); display: grid; place-items: center; }
+.ol-avatar svg, .ol-avatar img { width: 92%; }
+.ol-name { font-weight: 700; color: var(--seat-deep); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ol-score { margin-left: auto; padding: 2px 12px; border-radius: 99px; background: #fff; font-weight: 700; color: var(--seat-deep); white-space: nowrap; }
+.ol-card { position: relative; aspect-ratio: 1; border-radius: 50%; background: #fff; box-shadow: 0 0 0 5px var(--ink), 0 8px 0 5px #0000002a; container-type: inline-size; }
+.ol-card.big { width: 100%; animation: pop .3s cubic-bezier(.3, 1.6, .5, 1); }
+.ol.n1 .ol-card.big { width: min(86%, 86cqh, 360px); }
+.ol-card.small { width: min(100cqw, 100cqh); max-width: 340px; animation: pop .3s cubic-bezier(.3, 1.6, .5, 1); }
+.ol-sym {
+  position: absolute; translate: -50% -50%; rotate: var(--r); scale: var(--k);
+  font-size: 19cqw; line-height: 1; padding: 2cqw; border-radius: 50%; touch-action: manipulation;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+}
+.ol-card.big .ol-sym { font-size: 17cqw; }
+.ol-sym.good { background: #3DDC8455; box-shadow: 0 0 0 4px #27AE60; animation: pop .3s; }
+.ol-sym.bad { background: #EB575744; box-shadow: 0 0 0 4px #EB5757; animation: shake .4s; }
+.play:has(.ol:not(.n1)) .hold-pause { top: 50%; transform: translateY(-50%); }
+
+.ol-demo { display: flex; gap: 20px; }
+.ol-demo-card { position: relative; width: 120px; height: 120px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 4px #2B2350; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; align-content: center; gap: 4px 10px; font-size: 2rem; }
+.ol-demo-card .yes { border-radius: 50%; animation: ol-yes 2.4s infinite; }
+@keyframes ol-yes { 0%, 45% { box-shadow: none; } 55%, 95% { box-shadow: 0 0 0 4px #27AE60; background: #3DDC8455; } }
+
+/* ---------- Paires cachées ---------- */
+
+.pm { position: absolute; inset: 0; background: radial-gradient(circle at 50% 45%, #FFF4F8, #FFD9E8); --band: 84px; }
+.pm.solo { --band: 72px; }
+.pm-board {
+  position: absolute; left: max(12px, env(safe-area-inset-left)); right: max(12px, env(safe-area-inset-right)); top: var(--band); bottom: var(--band);
+  display: grid; grid-template-columns: repeat(var(--cols, 4), var(--card, 60px)); grid-auto-rows: calc(var(--card, 60px) * 1.2);
+  gap: 8px; justify-content: center; align-content: center;
+}
+.pm.solo .pm-board { top: 64px; }
+.pm-card { position: relative; perspective: 600px; touch-action: manipulation; }
+.pm-back, .pm-face {
+  position: absolute; inset: 0; display: grid; place-items: center; border-radius: 14px; backface-visibility: hidden;
+  transition: transform .35s; box-shadow: 0 4px 0 #0000002a;
+}
+.pm-back { background: repeating-linear-gradient(45deg, #B983FF 0 10px, #A56BF5 10px 20px); box-shadow: inset 0 0 0 3px #fff, 0 4px 0 #7B4FC8; }
+.pm-face { background: #fff; transform: rotateY(180deg); font-size: calc(var(--card, 60px) * 0.6); box-shadow: inset 0 0 0 3px #E4D3F7, 0 4px 0 #0000002a; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }
+.pm-card.up .pm-back { transform: rotateY(180deg); }
+.pm-card.up .pm-face { transform: rotateY(360deg); }
+.pm-card.found .pm-face { background: #E7FAEE; box-shadow: inset 0 0 0 3px #27AE60, 0 4px 0 #18804A; }
+.pm-card.found { animation: pop .35s; }
+.pm-card.swap { animation: pm-swap .7s; }
+@keyframes pm-swap { 20%, 60% { transform: translateY(-10px) rotate(-6deg); } 40%, 80% { transform: translateY(-10px) rotate(6deg); } }
+.pm-pad { width: auto; }
+.pm-pad .pad-info { flex-direction: row; align-items: center; gap: 8px; }
+.pm-count { font-weight: 700; color: var(--seat-deep); white-space: nowrap; }
+.pm-pad.turn .pad-info { box-shadow: 0 0 0 5px var(--seat); animation: breathe-btn 1s ease-in-out infinite; }
+.pm.solo .pad-0 { left: auto; right: 12px; top: 10px; bottom: auto; translate: none; }
+.pm-turn { position: absolute; z-index: 4; left: 50%; top: 50%; translate: -50% -50%; display: none; align-items: center; gap: 10px; padding: 8px 22px 8px 8px; border-radius: 99px; background: #fff; box-shadow: 0 0 0 5px var(--seat); font-weight: 700; font-size: clamp(1.2rem, 4.5vmin, 1.8rem); white-space: nowrap; pointer-events: none; }
+.pm-turn.show { display: flex; animation: banner 1.6s forwards; }
+.pm-turn.pos-1, .pm-turn.pos-3 { rotate: 180deg; }
+.pm-turn-art { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; box-shadow: 0 0 0 3px var(--seat); }
+.pm-turn-art svg, .pm-turn-art img { width: 92%; }
+.play:has(.pm:not(.solo)) .hold-pause { top: 50%; transform: translateY(-50%); }
+
+.pm-demo { display: grid; grid-template-columns: repeat(4, 56px); gap: 8px; }
+.pm-demo-card { display: grid; place-items: center; height: 70px; border-radius: 12px; font-size: 1.9rem; background: repeating-linear-gradient(45deg, #B983FF 0 8px, #A56BF5 8px 16px); color: transparent; box-shadow: inset 0 0 0 3px #fff; }
+.pm-demo-card.a, .pm-demo-card.b { animation: pm-demo 3s infinite; }
+.pm-demo-card.b { animation-delay: .5s; }
+@keyframes pm-demo { 0%, 15% { background: repeating-linear-gradient(45deg, #B983FF 0 8px, #A56BF5 8px 16px); color: transparent; } 25%, 85% { background: #E7FAEE; color: inherit; box-shadow: inset 0 0 0 3px #27AE60; } }
+
+/* ---------- Petits bolides ---------- */
+
+.pb-demo { display: flex; align-items: center; gap: 24px; }
+.pb-demo-track { position: relative; width: 200px; height: 130px; border-radius: 65px; background: #86D17A; box-shadow: inset 0 0 0 26px #8C86A6, inset 0 0 0 30px #2B2350; }
+.pb-demo-car { position: absolute; left: 0; top: 0; width: 30px; height: 18px; border-radius: 7px; background: #2F80ED; box-shadow: 0 0 0 3px #2B2350; offset-path: inset(13px round 52px); animation: pb-lap 3s linear infinite; }
+@keyframes pb-lap { to { offset-distance: 100%; } }
