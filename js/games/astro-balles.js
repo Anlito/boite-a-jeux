@@ -1,9 +1,17 @@
 // Astro-balles : chacun défend son côté de l'écran avec une raquette.
 // Une balle qui sort de ton côté te coûte un cœur. Évite la balle rouge, attrape les bonus.
-import { SEATS, robotArt, icon } from "../core/art.js";
+import { SEATS, robotArt, icon, hasImage, imagePath } from "../core/art.js";
 import { play, say } from "../core/sound.js";
 import { h } from "../core/ui.js";
-import { createStage, createLoop, text, createParticles } from "../core/stage.js";
+import { createStage, createLoop, text, createParticles, artImage } from "../core/stage.js";
+// Images du lot 8 (null si absentes : on garde le dessin).
+const picture = name => hasImage(`astro-balles/${name}`) ? artImage(`<img src="${imagePath(`astro-balles/${name}`)}">`) : null;
+const ready = img => img && img.complete && img.naturalWidth;
+const IMG = {
+  sky: picture("fond-espace.jpg"), ball: picture("balle.png"), hazard: picture("balle-rouge.png"),
+  multi: picture("bonus-double.png"), grand: picture("bonus-grand.png"), heart: picture("coeur.png"), spark: picture("etincelle.png"),
+  paddles: { Bleu: picture("raquette-bleu.png"), Rouge: picture("raquette-rouge.png"), Vert: picture("raquette-vert.png"), Jaune: picture("raquette-jaune.png") }
+};
 
 const R = 14, EDGE = 46, THICK = 22, PADDLE = 190;
 const SIDES = { 1: ["bottom"], 2: ["bottom", "top"], 3: ["bottom", "top", "left"], 4: ["bottom", "top", "left", "right"] };
@@ -48,7 +56,7 @@ function mount(root, ctx) {
     length: PADDLE * Math.sqrt(span(sides[i]) / 1000) * (1 + (p.boost || 0) * 0.18), ai: { wait: 0, aim: span(sides[i]) / 2 }
   }));
   const bySide = side => players.find(pl => pl.side === side && !pl.out);
-  let balls = [], hazard = null, bonus = null, phase = "serve", timer = 2.2, clock = 0, bonusTimer = 8, hazardTimer = 14, eliminated = [], message = null;
+  let sparks = [], balls = [], hazard = null, bonus = null, phase = "serve", timer = 2.2, clock = 0, bonusTimer = 8, hazardTimer = 14, eliminated = [], message = null;
 
   function serve() {
     balls = [];
@@ -207,6 +215,7 @@ function mount(root, ctx) {
           return;
         }
         hitPaddle(ball, pl);
+        sparks.push({ x: ball.x, y: ball.y, age: 0 });
         continue;
       }
       // Sortie
@@ -304,6 +313,15 @@ function mount(root, ctx) {
 
   function draw() {
     stage.begin();
+    if (ready(IMG.sky)) {
+      // Le ciel du lot, coupé pour couvrir tout le terrain (la planète et la lune restent dans les coins).
+      // Écran en hauteur : on tourne le ciel d'un quart de tour pour garder la planète et la lune dans les coins.
+      const img = IMG.sky, tall = FH > FW, bw = tall ? FH : FW, bh = tall ? FW : FH;
+      const k = Math.max(bw / img.naturalWidth, bh / img.naturalHeight);
+      g.save(); g.translate(FW / 2, FH / 2); if (tall) g.rotate(Math.PI / 2);
+      g.drawImage(img, -img.naturalWidth * k / 2, -img.naturalHeight * k / 2, img.naturalWidth * k, img.naturalHeight * k);
+      g.restore();
+    } else {
     const sky = g.createRadialGradient(FW / 2, FH / 2, 60, FW / 2, FH / 2, Math.max(FW, FH) * 0.75);
     sky.addColorStop(0, "#3B2F86");
     sky.addColorStop(1, "#1C1745");
@@ -315,6 +333,7 @@ function mount(root, ctx) {
     }
     g.fillStyle = "#FF9AA8aa"; g.beginPath(); g.arc(140, 160, 46, 0, Math.PI * 2); g.fill();
     g.fillStyle = "#7FD0F2aa"; g.beginPath(); g.arc(FW - 130, FH - 180, 30, 0, Math.PI * 2); g.fill();
+    }
     g.strokeStyle = "#ffffff22"; g.lineWidth = 3; g.setLineDash([14, 16]);
     g.beginPath(); g.arc(FW / 2, FH / 2, 120, 0, Math.PI * 2); g.stroke();
     g.setLineDash([]);
@@ -330,15 +349,30 @@ function mount(root, ctx) {
     }
     // Bonus
     if (bonus) {
+      const pic = bonus.kind === "multi" ? IMG.multi : IMG.grand;
       g.save(); g.translate(bonus.x, bonus.y); g.rotate(Math.sin(bonus.spin) * 0.3);
+      if (ready(pic)) { const sc = 1 + Math.sin(bonus.spin * 3) * 0.05; g.drawImage(pic, -44 * sc, -44 * sc, 88 * sc, 88 * sc); g.restore(); }
+      else {
       g.fillStyle = "#FFC83D"; g.beginPath(); g.arc(0, 0, 32, 0, Math.PI * 2); g.fill();
       g.restore();
       text(g, bonus.kind === "multi" ? "×2" : "↔", bonus.x, bonus.y + 2, { size: 30, color: "#5A3A00" });
+      }
     }
     // Raquettes et cœurs
     for (const pl of players) {
       if (pl.out) continue;
       const len = half(pl) * 2, line = lineOf(pl.side);
+      const paddle = IMG.paddles[pl.p.name];
+      if (ready(paddle)) {
+        // Partie visible de l'image : x 102 à 918, y 42 à 213 sur 1024 × 256.
+        const k = paddle.naturalWidth / 1024, w = len * 1.08, hgt = w * 171 / 816;
+        const [cx, cy, rot] = { bottom: [pl.pos, line, 0], top: [pl.pos, line, Math.PI], left: [line, pl.pos, Math.PI / 2], right: [line, pl.pos, -Math.PI / 2] }[pl.side];
+        g.save(); g.translate(cx, cy); g.rotate(rot);
+        g.shadowColor = pl.p.color; g.shadowBlur = pl.flash > 0 ? 34 : 14;
+        if (pl.flash > 0.3) g.filter = "brightness(1.7)";
+        g.drawImage(paddle, 102 * k, 42 * k, 816 * k, 171 * k, -w / 2, -hgt / 2, w, hgt);
+        g.restore();
+      } else {
       g.save();
       g.shadowColor = pl.p.color; g.shadowBlur = pl.flash > 0 ? 30 : 16;
       g.fillStyle = pl.flash > 0.3 ? "#fff" : pl.p.color;
@@ -347,6 +381,14 @@ function mount(root, ctx) {
       else g.roundRect(line - THICK / 2, pl.pos - len / 2, THICK, len, THICK / 2);
       g.fill();
       g.restore();
+      }
+      if (ready(IMG.heart)) {
+        const [hx, hy, hr] = { bottom: [FW / 2, FH - 14, 0], top: [FW / 2, 14, Math.PI], left: [14, FH / 2, Math.PI / 2], right: [FW - 14, FH / 2, -Math.PI / 2] }[pl.side];
+        g.save(); g.translate(hx, hy); g.rotate(hr);
+        for (let k = 0; k < HEARTS; k++) { g.globalAlpha = k < pl.hearts ? 1 : 0.25; g.drawImage(IMG.heart, (k - 1) * 30 - 12, -12, 24, 24); }
+        g.globalAlpha = 1; g.restore();
+        continue;
+      }
       const hearts = "♥".repeat(pl.hearts) + "♡".repeat(Math.max(0, HEARTS - pl.hearts));
       const pos = { bottom: [FW / 2, FH - 16, 0], top: [FW / 2, 16, Math.PI], left: [16, FH / 2, Math.PI / 2], right: [FW - 16, FH / 2, -Math.PI / 2] }[pl.side];
       text(g, hearts, pos[0], pos[1], { size: 34, color: "#FF9AA8", rotate: pos[2] });
@@ -355,19 +397,45 @@ function mount(root, ctx) {
     for (const ball of balls) {
       ball.trail.forEach((p, i) => { g.globalAlpha = i / ball.trail.length * 0.4; g.fillStyle = "#87DFFF"; g.beginPath(); g.arc(p.x, p.y, R * (0.4 + i / 20), 0, Math.PI * 2); g.fill(); });
       g.globalAlpha = 1;
+      if (ready(IMG.ball)) {
+        // Balle du lot : la boule est en (329, 256), rayon 129 sur 512 ; la traînée part derrière elle.
+        const k = IMG.ball.naturalWidth / 512, sc = (R * 1.35) / 129;
+        g.save(); g.translate(ball.x, ball.y); g.rotate(Math.atan2(ball.vy, ball.vx));
+        g.shadowColor = "#56CEFF"; g.shadowBlur = 18;
+        g.drawImage(IMG.ball, 0, 0, 512 * k, 512 * k, -329 * sc, -256 * sc, 512 * sc, 512 * sc);
+        g.restore();
+      } else {
       g.save(); g.shadowColor = "#56CEFF"; g.shadowBlur = 24;
       g.fillStyle = "#D0F7FF"; g.beginPath(); g.arc(ball.x, ball.y, R, 0, Math.PI * 2); g.fill();
       g.restore();
+      }
     }
     if (hazard) {
       const blink = hazard.warn > 0 && Math.floor(hazard.warn * 8) % 2;
       if (!blink) {
+        if (ready(IMG.hazard)) {
+          const size = (R + 4) * 3.1;
+          g.save(); g.translate(hazard.x, hazard.y); g.rotate(clock * 2);
+          g.drawImage(IMG.hazard, -size / 2, -size / 2, size, size);
+          g.restore();
+        } else {
         g.save(); g.shadowColor = "#FF425C"; g.shadowBlur = 24;
         g.fillStyle = "#FF5267"; g.beginPath(); g.arc(hazard.x, hazard.y, R + 4, 0, Math.PI * 2); g.fill();
         g.restore();
         text(g, "!", hazard.x, hazard.y + 1, { size: 24, color: "#fff" });
+        }
       }
     }
+    // Étincelles quand une raquette renvoie la balle
+    for (const sp of sparks) {
+      sp.age += 1 / 60;
+      if (!ready(IMG.spark) || sp.age > 0.35) continue;
+      const size = 40 + sp.age * 120;
+      g.globalAlpha = 1 - sp.age / 0.35;
+      g.drawImage(IMG.spark, sp.x - size / 2, sp.y - size / 2, size, size);
+      g.globalAlpha = 1;
+    }
+    sparks = sparks.filter(sp => sp.age <= 0.35);
     particles.draw(g);
     if (phase === "serve") text(g, "Prêt ?", FW / 2, FH / 2 + 70, { size: 56, color: "#fff", stroke: "#1C1745" });
     if (message) {

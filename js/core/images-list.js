@@ -1,6 +1,17 @@
 // Images livrées (dossier assets/). Script ordinaire : lu par l’application ET par sw.js.
 // À compléter à chaque nouveau lot d’images.
 globalThis.ASSET_IMAGES = [
+  "astro-balles/balle-rouge.png",
+  "astro-balles/balle.png",
+  "astro-balles/bonus-double.png",
+  "astro-balles/bonus-grand.png",
+  "astro-balles/coeur.png",
+  "astro-balles/etincelle.png",
+  "astro-balles/fond-espace.jpg",
+  "astro-balles/raquette-bleu.png",
+  "astro-balles/raquette-jaune.png",
+  "astro-balles/raquette-rouge.png",
+  "astro-balles/raquette-vert.png",
   "commun/avatars/avatar-chat.png",
   "commun/avatars/avatar-dino.png",
   "commun/avatars/avatar-grenouille.png",
