@@ -12,7 +12,7 @@ Ce fichier sert à reprendre le travail dans une nouvelle conversation sans tout
 - Tout en français, vocabulaire simple, sans jargon.
 - Le README décrit l'organisation du code et l'interface d'un jeu (`mount`, `levels`, `finish`).
 
-## État actuel (version 0.35.0, fin novembre 2026)
+## État actuel (version 0.36.0, fin novembre 2026)
 
 17 jeux en ligne :
 
@@ -44,7 +44,7 @@ Lots 16 et 17 (vignettes d'Œil de lynx, Paires cachées, Palet glissant et Quat
 Le brief complet est dans [docs/brief-visuels-lots-6-20.md](docs/brief-visuels-lots-6-20.md) (paragraphe de style à coller en tête de chaque demande, puis un lot par jeu). L'utilisateur l'a déjà transmis à ChatGPT.
 Tous les lots du brief (1 à 20) sont intégrés.
 
-**Album (0.32.0)** : pochette passée de 5 à 10 pièces (les pièces venaient trop vite). 68 autocollants dont 24 tirés des images des jeux (héros et objets). Brief des lots 21 à 23 (60 autocollants : dinosaures, mer, engins, espace, monstres, gourmandises) dans [docs/brief-album-lots-21-23.md](docs/brief-album-lots-21-23.md), **lots 21 et 22 intégrés (0.35.0, 108 autocollants) ; lot 23 à demander à ChatGPT**. Intégration : PNG réduits à 256 px dans `assets/album/<famille>/`, régénérer `images-list.js`, rien à coder.
+**Album (0.32.0)** : pochette passée de 5 à 10 pièces (les pièces venaient trop vite). 68 autocollants dont 24 tirés des images des jeux (héros et objets). Brief des lots 21 à 23 (60 autocollants : dinosaures, mer, engins, espace, monstres, gourmandises) dans [docs/brief-album-lots-21-23.md](docs/brief-album-lots-21-23.md), **lots 21 à 23 intégrés (0.36.0) : album complet, 128 autocollants**. Intégration : PNG réduits à 256 px dans `assets/album/<famille>/`, régénérer `images-list.js`, rien à coder.
 
 Prochains visuels possibles : scènes de Cherche et trouve, quand le jeu sera fait.
 
