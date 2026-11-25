@@ -1,16 +1,18 @@
 // Paires cachées : le jeu de mémoire. Des cartes face cachée au milieu de l'écran ; on en retourne deux,
 // et si elles sont pareilles on les garde et on rejoue. À plusieurs, chacun son tour, sur le même plateau.
 // Plus tard dans les niveaux, deux cartes changent de place quand on se trompe.
+import { PICTOS, pictoHTML } from "../core/pictos.js";
 import { play, say } from "../core/sound.js";
 import { h } from "../core/ui.js";
 import { createLoop } from "../core/stage.js";
 
+// Les dessins du lot 13 (js/core/pictos.js), 16 par thème.
 const THEMES = {
-  animaux: ["🐶", "🐱", "🐰", "🦊", "🐻", "🐼", "🐨", "🐯", "🦁", "🐮", "🐷", "🐸", "🐵", "🐔", "🐧", "🦉"],
-  fruits: ["🍎", "🍐", "🍊", "🍋", "🍌", "🍉", "🍇", "🍓", "🍒", "🍑", "🥝", "🍍", "🥥", "🍈", "🫐", "🥕"],
-  // Des dessins qui se ressemblent : il faut bien regarder.
-  pareils: ["🐶", "🐕", "🐱", "🐈", "🐭", "🐹", "🐰", "🐇", "🐻", "🐨", "🐸", "🐢", "🐠", "🐟", "🦋", "🐞"],
-  melange: ["🚗", "🚀", "⚽", "🎈", "🌈", "⭐", "🌻", "🍦", "🎁", "🎸", "⏰", "🔑", "☀️", "🌙", "❄️", "🧩"]
+  animaux: PICTOS.animaux,
+  fruits: PICTOS.fruits,
+  // Des têtes d'animaux, toutes rondes et souriantes : il faut bien regarder les détails.
+  pareils: PICTOS.animaux,
+  melange: PICTOS.objets
 };
 const MULTI_PAIRS = 12;
 
@@ -68,7 +70,7 @@ function mount(root, ctx) {
 
   function render() {
     board.innerHTML = deck.map((card, k) => `<button class="pm-card ${card.found ? "found" : ""} ${card.up || card.found ? "up" : ""}" data-k="${k}" aria-label="Carte ${k + 1}">
-      <span class="pm-back"></span><span class="pm-face">${card.face}</span></button>`).join("");
+      <span class="pm-back"></span><span class="pm-face">${pictoHTML(card.face)}</span></button>`).join("");
     layout();
   }
 
@@ -155,8 +157,8 @@ function mount(root, ctx) {
     seen.delete(a); seen.delete(b);
     if (sb) seen.set(a, sb);
     if (sa) seen.set(b, sa);
-    cardEl(a).querySelector(".pm-face").textContent = deck[a].face;
-    cardEl(b).querySelector(".pm-face").textContent = deck[b].face;
+    cardEl(a).querySelector(".pm-face").innerHTML = pictoHTML(deck[a].face);
+    cardEl(b).querySelector(".pm-face").innerHTML = pictoHTML(deck[b].face);
     [cardEl(a), cardEl(b)].forEach(el => { el.classList.remove("swap"); void el.offsetWidth; el.classList.add("swap"); });
     play("trap");
   }
@@ -240,7 +242,7 @@ function mount(root, ctx) {
 
 function demo() {
   const node = h(`<div class="pm-demo">
-    <span class="pm-demo-card a">🐶</span><span class="pm-demo-card"></span><span class="pm-demo-card b">🐶</span><span class="pm-demo-card"></span>
+    <span class="pm-demo-card a">${pictoHTML("chien")}</span><span class="pm-demo-card"></span><span class="pm-demo-card b">${pictoHTML("chien")}</span><span class="pm-demo-card"></span>
   </div>`);
   return { node, stop() {} };
 }

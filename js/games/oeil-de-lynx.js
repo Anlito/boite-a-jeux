@@ -1,14 +1,14 @@
 // Œil de lynx : une grande carte au milieu, une carte pour chaque joueur. Deux cartes ont toujours
 // un seul dessin en commun : le premier qui le touche sur sa carte marque le point.
 // Les cartes sont construites comme un plan projectif : chaque paire de cartes partage exactement un dessin.
+import { PICTOS, pictoHTML } from "../core/pictos.js";
 import { play, say } from "../core/sound.js";
 import { h } from "../core/ui.js";
 import { createLoop } from "../core/stage.js";
 
 const GOAL = 6;                  // points pour gagner à plusieurs
 const MULTI_ORDER = 3;           // à plusieurs : 4 dessins par carte
-const SYMBOLS = ["🐶", "🐱", "🍎", "⭐", "🚗", "🌈", "⚽", "🎈", "🦋", "🌻", "🍌", "🐸", "🐟", "🍓", "🚀", "🎁",
-  "🔑", "☀️", "🌙", "❄️", "🔥", "🍦", "🐢", "🦁", "🐘", "🍄", "⚓", "🎸", "✏️", "⏰", "🧩"];
+const SYMBOLS = PICTOS.tous;      // 48 dessins : chaque partie en tire au plus 31
 
 // Niveaux solo : dessins par carte (ordre 2 = 3 dessins, 3 = 4, 5 = 6), nombre de cartes,
 // dessins tournés et de tailles variées, temps (secondes) pour 1, 2, 3 étoiles.
@@ -73,7 +73,7 @@ function cardHTML(symbols, rules, kind) {
     const [x, y] = slots[k];
     const turn = rules.turn ? Math.round(between(0, 360)) : 0;
     const size = rules.sizes ? between(0.75, 1.25) : 1;
-    return `<button class="ol-sym" data-s="${s}" style="left:${x}%;top:${y}%;--r:${turn}deg;--k:${size.toFixed(2)}">${s}</button>`;
+    return `<button class="ol-sym" data-s="${s}" style="left:${x}%;top:${y}%;--r:${turn}deg;--k:${size.toFixed(2)}">${pictoHTML(s)}</button>`;
   }).join("")}</div>`;
 }
 
@@ -216,8 +216,8 @@ function mount(root, ctx) {
 
 function demo() {
   const node = h(`<div class="ol-demo">
-    <div class="ol-demo-card"><span>🐶</span><span>⭐</span><span class="yes">🍎</span></div>
-    <div class="ol-demo-card"><span class="yes">🍎</span><span>🚀</span><span>🌻</span></div>
+    <div class="ol-demo-card"><span>${pictoHTML("chien")}</span><span>${pictoHTML("etoile")}</span><span class="yes">${pictoHTML("pomme")}</span></div>
+    <div class="ol-demo-card"><span class="yes">${pictoHTML("pomme")}</span><span>${pictoHTML("fusee")}</span><span>${pictoHTML("tournesol")}</span></div>
   </div>`);
   return { node, stop() {} };
 }

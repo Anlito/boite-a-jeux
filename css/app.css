@@ -1191,3 +1191,13 @@ h1, h2, h3, h4, p { margin: 0; }
 .ce-flash { display: flex; align-items: center; gap: 6px; }
 .ce-flash img { width: 2.3em; height: 2.3em; margin: -.65em 0 -.65em -.55em; }
 .ce-demo-eclair { width: 64px; height: 64px; margin-bottom: -8px; }
+
+/* Œil de lynx et Paires cachées : dessins du lot 13 (js/core/pictos.js). */
+.picto { display: block; width: 1.15em; height: 1.15em; pointer-events: none; }
+.ol-sym .picto { width: 1.3em; height: 1.3em; }
+.ol-demo-card .picto { width: 1.3em; height: 1.3em; }
+.pm-face .picto { width: 1.25em; height: 1.25em; }
+.pm-demo-card .picto { width: 1.2em; height: 1.2em; }
+.pm-demo-card.a .picto, .pm-demo-card.b .picto { animation: pm-demo-pic 3s infinite; }
+.pm-demo-card.b .picto { animation-delay: .5s; }
+@keyframes pm-demo-pic { 0%, 15% { opacity: 0; } 25%, 85% { opacity: 1; } }
